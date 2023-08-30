@@ -54,19 +54,23 @@ def generate_launch_description():
                      parameters=[{'file': lean_forward_pos_path}],
                      remappings=[('start_pos_action', 'start_lean_forward')])
 
-    twist_forward = ExecuteProcess(
-        cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
-        shell=True)
+    # twist_forward = ExecuteProcess(
+    #     cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
+    #     shell=True)
+
+    motion_manager_node = Node(package='wrestle', executable='motion_manager', output='screen',
+                               remappings=[('imu', 'sensors/imu')])
 
     return LaunchDescription([
         nao_lola_client_node,
-        ik_node,
-        nao_phase_provider_node,
-        walk_node,
+        # ik_node,
+        # nao_phase_provider_node,
+        # walk_node,
         nao_lola_conversion_node,
-        lower_arms,
-        # getup_back_node,
-        # getup_front_node,
-        # lean_forward_node,
-        twist_forward,
+        # lower_arms,
+        getup_back_node,
+        getup_front_node,
+        lean_forward_node,
+        # twist_forward,
+        # motion_manager_node,
     ])

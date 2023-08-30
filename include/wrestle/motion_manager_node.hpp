@@ -15,6 +15,7 @@
 #include <memory>
 
 #include "rclcpp/node.hpp"
+#include "nao_lola_sensor_msgs/msg/angle.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 namespace wrestle
@@ -26,8 +27,12 @@ public:
   explicit MotionManagerNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions{});
 
 private:
-  rclcpp::Publisher<std_msgs::msg::Bool> pub_start_getup_front_;
-  rclcpp::Publisher<std_msgs::msg::Bool> pub_start_getup_back_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_front_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_back_;
+
+  rclcpp::Subscription<nao_lola_sensor_msgs::msg::Angle>::SharedPtr sub_angle_;
+
+  void angleCallback(const nao_lola_sensor_msgs::msg::Angle & msg);
 };
 
 
