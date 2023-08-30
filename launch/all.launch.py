@@ -14,7 +14,9 @@
 
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -31,7 +33,29 @@ def generate_launch_description():
     nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion')
 
     lower_arms = ExecuteProcess(
-        cmd=['ros2 topic pub --once /effectors/joint_positions nao_command_msgs/msg/JointPositions "{indexes: [2, 18], positions: [1.517, 1.517]}"'],
+        cmd=['ros2 topic pub --once /effectors/joint_positions nao_lola_command_msgs/msg/JointPositions "{indexes: [2, 18], positions: [1.517, 1.517]}"'],
+        shell=True)
+
+    getup_back_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
+    getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                     parameters=[{'file': getup_back_pos_path}],
+                     remappings=[('start_pos_action', 'start_getup_back')])
+
+    getup_front_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'getupFront.pos'])
+    getup_front_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                     parameters=[{'file': getup_front_pos_path}],
+                     remappings=[('start_pos_action', 'start_getup_front')])
+
+    lean_forward_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'leanForward.pos'])
+    lean_forward_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                     parameters=[{'file': lean_forward_pos_path}],
+                     remappings=[('start_pos_action', 'start_lean_forward')])
+
+    twist_forward = ExecuteProcess(
+        cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
         shell=True)
 
     return LaunchDescription([
@@ -41,4 +65,8 @@ def generate_launch_description():
         walk_node,
         nao_lola_conversion_node,
         lower_arms,
+        # getup_back_node,
+        # getup_front_node,
+        # lean_forward_node,
+        twist_forward,
     ])

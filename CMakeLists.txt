@@ -12,7 +12,7 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 
 # Install
-install(DIRECTORY launch
+install(DIRECTORY launch pos
   DESTINATION share/${PROJECT_NAME}/)
 
 if(BUILD_TESTING)
