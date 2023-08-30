@@ -72,5 +72,5 @@ def generate_launch_description():
         getup_front_node,
         lean_forward_node,
         # twist_forward,
-        # motion_manager_node,
+        motion_manager_node,
     ])
