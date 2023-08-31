@@ -58,8 +58,14 @@ def generate_launch_description():
     #     cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
     #     shell=True)
 
-    motion_manager_node = Node(package='wrestle', executable='motion_manager', output='screen',
-                               remappings=[('imu', 'sensors/imu')])
+    motion_manager_node = Node(package='wrestle', executable='motion_manager',
+                               remappings=[('imu', 'sensors/filtered_imu')])
+
+    complementary_filter_node = Node(package='imu_complementary_filter',
+                                     executable='complementary_filter_node',
+                                     remappings=[('imu/data_raw', 'sensors/imu'),
+                                                 ('imu/data', 'sensors/filtered_imu')],
+                                     parameters=[{'publish_tf': True}])
 
     return LaunchDescription([
         nao_lola_client_node,
@@ -73,4 +79,5 @@ def generate_launch_description():
         lean_forward_node,
         # twist_forward,
         motion_manager_node,
+        complementary_filter_node
     ])

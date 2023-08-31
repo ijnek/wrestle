@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(nao_lola_sensor_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 
@@ -17,9 +17,10 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   ament_cmake
   rclcpp
   rclcpp_components
-  nao_lola_sensor_msgs
+  sensor_msgs
   std_msgs
-  tf2)
+  tf2
+)
 
 # Build
 add_library(motion_manager_node SHARED

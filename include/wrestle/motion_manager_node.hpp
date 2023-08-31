@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "rclcpp/node.hpp"
-#include "nao_lola_sensor_msgs/msg/angle.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 namespace wrestle
@@ -30,9 +30,9 @@ private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_front_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_back_;
 
-  rclcpp::Subscription<nao_lola_sensor_msgs::msg::Angle>::SharedPtr sub_angle_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
 
-  void angleCallback(const nao_lola_sensor_msgs::msg::Angle & msg);
+  void imuCallback(const sensor_msgs::msg::Imu & msg);
 };
 
 

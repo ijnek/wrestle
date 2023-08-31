@@ -27,17 +27,23 @@ MotionManagerNode::MotionManagerNode(const rclcpp::NodeOptions & options)
   pub_start_getup_back_ = create_publisher<std_msgs::msg::Bool>("start_getup_back", 1);
 
   // Subscriptions
-  sub_angle_ = create_subscription<nao_lola_sensor_msgs::msg::Angle>(
-    "imu", 10, std::bind(&MotionManagerNode::angleCallback, this, std::placeholders::_1));
+  sub_imu_ = create_subscription<sensor_msgs::msg::Imu>(
+    "imu", 10, std::bind(&MotionManagerNode::imuCallback, this, std::placeholders::_1));
 }
 
-void MotionManagerNode::angleCallback(const nao_lola_sensor_msgs::msg::Angle & msg)
+void MotionManagerNode::imuCallback(const sensor_msgs::msg::Imu & msg)
 {
-  if (msg.x > 0.5) {
+  tf2::Quaternion q(msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w);
+  tf2::Matrix3x3 m(q);
+  double roll, pitch, yaw;
+  m.getRPY(roll, pitch, yaw);
+  RCLCPP_DEBUG(get_logger(), "Roll: %f, Pitch: %f, Yaw: %f", roll, pitch, yaw);
+
+  if (pitch > 1.0) {
     std_msgs::msg::Bool start_getup_front;
     start_getup_front.data = true;
     pub_start_getup_front_->publish(start_getup_front);
-  } else if (msg.x < -0.5) {
+  } else if (pitch < -1.0) {
     std_msgs::msg::Bool start_getup_back;
     start_getup_back.data = true;
     pub_start_getup_back_->publish(start_getup_back);
