@@ -60,7 +60,9 @@ def generate_launch_description():
 
     motion_manager_node = Node(package='wrestle', executable='motion_manager',
                                remappings=[('imu', 'sensors/filtered_imu'),
-                                           ('twist', 'target')])
+                                           ('sonar', 'sensors/sonar'),
+                                           ('twist', 'target'),
+                                           ('walk_change_state', 'Walk/change_state')])
 
     complementary_filter_node = Node(package='imu_complementary_filter',
                                      executable='complementary_filter_node',

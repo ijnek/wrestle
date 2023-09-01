@@ -14,6 +14,8 @@
 
 #include <memory>
 
+#include "lifecycle_msgs/srv/change_state.hpp"
+#include "nao_lola_sensor_msgs/msg/sonar.hpp"
 #include "rclcpp/node.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -30,17 +32,25 @@ public:
 private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_front_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_back_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_lean_forward_;
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_twist_;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
+  rclcpp::Subscription<nao_lola_sensor_msgs::msg::Sonar>::SharedPtr sub_sonar_;
+
+  rclcpp::Client<lifecycle_msgs::srv::ChangeState>::SharedPtr srv_walk_change_state_;
 
   rclcpp::TimerBase::SharedPtr timer_;
 
   // Callbacks
   void imuCallback(const sensor_msgs::msg::Imu & msg);
+  void sonarCallback(const nao_lola_sensor_msgs::msg::Sonar & msg);
   void timerCallback();
 
+  void stopWalk();
+
   float pitch_ = 0.0;
+  bool obstacle_in_front_ = false;
 };
 
 

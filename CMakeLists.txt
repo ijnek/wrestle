@@ -8,6 +8,8 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(lifecycle_msgs REQUIRED)
+find_package(nao_lola_sensor_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
@@ -17,6 +19,8 @@ find_package(tf2 REQUIRED)
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   ament_cmake
   geometry_msgs
+  lifecycle_msgs
+  nao_lola_sensor_msgs
   rclcpp
   rclcpp_components
   sensor_msgs
