@@ -55,7 +55,7 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include)
-install(DIRECTORY launch pos
+install(DIRECTORY launch pos rviz
   DESTINATION share/${PROJECT_NAME}/)
 
 if(BUILD_TESTING)

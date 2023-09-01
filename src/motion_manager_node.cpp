@@ -78,14 +78,14 @@ void MotionManagerNode::timerCallback()
     return;
   }
 
-  if (obstacle_in_front_) {
-    stopWalk();
+  // if (obstacle_in_front_) {
+  //   stopWalk();
 
-    std_msgs::msg::Bool start_lean_forward;
-    start_lean_forward.data = true;
-    pub_start_lean_forward_->publish(start_lean_forward);
-    return;
-  }
+  //   std_msgs::msg::Bool start_lean_forward;
+  //   start_lean_forward.data = true;
+  //   pub_start_lean_forward_->publish(start_lean_forward);
+  //   return;
+  // }
 
   // Walk forward
   geometry_msgs::msg::Twist twist;
@@ -95,6 +95,8 @@ void MotionManagerNode::timerCallback()
 
 void MotionManagerNode::stopWalk()
 {
+  return;  // (TODO): Remove this. This is here since this node lifecycle transition isn't really working yet.
+
   auto request = std::make_shared<lifecycle_msgs::srv::ChangeState::Request>();
   request->transition.id = lifecycle_msgs::msg::Transition::TRANSITION_DEACTIVATE;
   auto future_result = srv_walk_change_state_->async_send_request(request);

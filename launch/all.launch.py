@@ -13,7 +13,8 @@
 # limitations under the License.
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess
+from launch.actions import ExecuteProcess, IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
@@ -67,8 +68,31 @@ def generate_launch_description():
     complementary_filter_node = Node(package='imu_complementary_filter',
                                      executable='complementary_filter_node',
                                      remappings=[('imu/data_raw', 'sensors/imu'),
-                                                 ('imu/data', 'sensors/filtered_imu')],
-                                     parameters=[{'publish_tf': True}])
+                                                 ('imu/data', 'sensors/filtered_imu')])
+
+    nao_state_publisher_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            PathJoinSubstitution(
+                [FindPackageShare('nao_state_publisher'), 'launch', 'nao_state_publisher_launch.py']
+            )
+        )
+    )
+
+    rviz_config_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'rviz', 'default.rviz'])
+    rviz_node = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        arguments=['-d', rviz_config_path],
+    )
+
+    webots_nao_camera_top = Node(package='webots_nao_camera', executable='webots_nao_camera',
+                                 parameters=[{'port': 10001}],
+                                 remappings=[('image', 'image_top')])
+    webots_nao_camera_bot = Node(package='webots_nao_camera', executable='webots_nao_camera',
+                                 parameters=[{'port': 10002}],
+                                 remappings=[('image', 'image_bot')])
 
     return LaunchDescription([
         nao_lola_client_node,
@@ -79,8 +103,12 @@ def generate_launch_description():
         lower_arms,
         getup_back_node,
         getup_front_node,
-        lean_forward_node,
+        # lean_forward_node,
         # twist_forward,
         motion_manager_node,
-        complementary_filter_node
+        complementary_filter_node,
+        nao_state_publisher_launch,
+        rviz_node,
+        webots_nao_camera_top,
+        webots_nao_camera_bot,
     ])
