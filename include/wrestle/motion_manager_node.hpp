@@ -17,6 +17,7 @@
 #include "rclcpp/node.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "std_msgs/msg/bool.hpp"
+#include "geometry_msgs/msg/twist.hpp"
 
 namespace wrestle
 {
@@ -29,10 +30,17 @@ public:
 private:
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_front_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_start_getup_back_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_twist_;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
 
+  rclcpp::TimerBase::SharedPtr timer_;
+
+  // Callbacks
   void imuCallback(const sensor_msgs::msg::Imu & msg);
+  void timerCallback();
+
+  float pitch_ = 0.0;
 };
 
 

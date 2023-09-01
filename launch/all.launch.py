@@ -59,7 +59,8 @@ def generate_launch_description():
     #     shell=True)
 
     motion_manager_node = Node(package='wrestle', executable='motion_manager',
-                               remappings=[('imu', 'sensors/filtered_imu')])
+                               remappings=[('imu', 'sensors/filtered_imu'),
+                                           ('twist', 'target')])
 
     complementary_filter_node = Node(package='imu_complementary_filter',
                                      executable='complementary_filter_node',
@@ -69,11 +70,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         nao_lola_client_node,
-        # ik_node,
-        # nao_phase_provider_node,
-        # walk_node,
+        ik_node,
+        nao_phase_provider_node,
+        walk_node,
         nao_lola_conversion_node,
-        # lower_arms,
+        lower_arms,
         getup_back_node,
         getup_front_node,
         lean_forward_node,
