@@ -3,10 +3,8 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
-        - /Status1
-      Splitter Ratio: 0.5
+      Expanded: ~
+      Splitter Ratio: 0.4529411792755127
     Tree Height: 272
   - Class: rviz_common/Selection
     Name: Selection
@@ -476,7 +474,7 @@ Visualization Manager:
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: base_link
+    Fixed Frame: odom
     Frame Rate: 30
   Name: root
   Tools:
@@ -519,7 +517,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.4090278148651123
+      Distance: 1.4150593280792236
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -534,10 +532,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.24539947509765625
+      Pitch: 0.2803994119167328
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.010414371266961098
+      Yaw: 6.238598346710205
     Saved: ~
 Window Geometry:
   Bottom:

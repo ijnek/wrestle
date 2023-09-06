@@ -68,7 +68,8 @@ def generate_launch_description():
     complementary_filter_node = Node(package='imu_complementary_filter',
                                      executable='complementary_filter_node',
                                      remappings=[('imu/data_raw', 'sensors/imu'),
-                                                 ('imu/data', 'sensors/filtered_imu')])
+                                                 ('imu/data', 'sensors/filtered_imu')],
+                                     parameters=[{'publish_tf': True}, {'reverse_tf': True}])
 
     nao_state_publisher_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
