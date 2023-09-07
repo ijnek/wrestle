@@ -65,11 +65,14 @@ def generate_launch_description():
                                            ('twist', 'target'),
                                            ('walk_change_state', 'Walk/change_state')])
 
-    complementary_filter_node = Node(package='imu_complementary_filter',
-                                     executable='complementary_filter_node',
-                                     remappings=[('imu/data_raw', 'sensors/imu'),
-                                                 ('imu/data', 'sensors/filtered_imu')],
-                                     parameters=[{'publish_tf': True}, {'reverse_tf': True}])
+    imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
+                                    executable='imu_filter_madgwick_node',
+                                    remappings=[('imu/data_raw', 'sensors/imu'),
+                                                ('imu/data', 'sensors/filtered_imu')],
+                                    parameters=[{'publish_tf': True},
+                                                {'reverse_tf': True},
+                                                {'use_mag': False}
+                                                ])
 
     nao_state_publisher_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -107,7 +110,7 @@ def generate_launch_description():
         # lean_forward_node,
         # twist_forward,
         motion_manager_node,
-        complementary_filter_node,
+        imu_filter_madgwick_node,
         nao_state_publisher_launch,
         rviz_node,
         webots_nao_camera_top,
