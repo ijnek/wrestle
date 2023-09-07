@@ -46,6 +46,8 @@ MotionManagerNode::MotionManagerNode(const rclcpp::NodeOptions & options)
 
   // Timer
   timer_ = create_wall_timer(10ms, std::bind(&MotionManagerNode::timerCallback, this));
+  timer_use_sonar_readings_ =
+    create_wall_timer(4000ms, std::bind(&MotionManagerNode::timerUseSonarReadingsCallback, this));
 }
 
 void MotionManagerNode::imuCallback(const sensor_msgs::msg::Imu & msg)
@@ -55,7 +57,7 @@ void MotionManagerNode::imuCallback(const sensor_msgs::msg::Imu & msg)
 
 void MotionManagerNode::sonarCallback(const nao_lola_sensor_msgs::msg::Sonar & msg)
 {
-  obstacle_in_front_ = (msg.left < 0.5 || msg.right < 0.5);
+  obstacle_in_front_ = (msg.left < 0.4 || msg.right < 0.4);
 }
 
 void MotionManagerNode::timerCallback()
@@ -78,19 +80,25 @@ void MotionManagerNode::timerCallback()
     return;
   }
 
-  // if (obstacle_in_front_) {
-  //   stopWalk();
+  if (use_sonar_readings_ && obstacle_in_front_) {
+    stopWalk();
 
-  //   std_msgs::msg::Bool start_lean_forward;
-  //   start_lean_forward.data = true;
-  //   pub_start_lean_forward_->publish(start_lean_forward);
-  //   return;
-  // }
+    std_msgs::msg::Bool start_lean_forward;
+    start_lean_forward.data = true;
+    pub_start_lean_forward_->publish(start_lean_forward);
+    return;
+  }
 
   // Walk forward
   geometry_msgs::msg::Twist twist;
-  twist.linear.x = 0.1;
+  twist.linear.x = 0.2;
   pub_twist_->publish(twist);
+}
+
+void MotionManagerNode::timerUseSonarReadingsCallback()
+{
+  use_sonar_readings_ = true;
+  timer_use_sonar_readings_->cancel();
 }
 
 void MotionManagerNode::stopWalk()

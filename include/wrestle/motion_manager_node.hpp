@@ -41,16 +41,19 @@ private:
   rclcpp::Client<lifecycle_msgs::srv::ChangeState>::SharedPtr srv_walk_change_state_;
 
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr timer_use_sonar_readings_;
 
   // Callbacks
   void imuCallback(const sensor_msgs::msg::Imu & msg);
   void sonarCallback(const nao_lola_sensor_msgs::msg::Sonar & msg);
   void timerCallback();
+  void timerUseSonarReadingsCallback();
 
   void stopWalk();
 
   float pitch_ = 0.0;
   bool obstacle_in_front_ = false;
+  bool use_sonar_readings_ = false;
 };
 
 
