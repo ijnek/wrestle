@@ -16,11 +16,14 @@ from launch import LaunchDescription
 from launch.actions import ExecuteProcess, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
-from launch_ros.actions import Node
+from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+
+    # Set use_sim_time across all nodes
+    use_sim_time = SetParameter(name='use_sim_time', value=True)
 
     nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client')
 
@@ -71,7 +74,8 @@ def generate_launch_description():
                                                 ('imu/data', 'sensors/filtered_imu')],
                                     parameters=[{'publish_tf': True},
                                                 {'reverse_tf': True},
-                                                {'use_mag': False}
+                                                {'use_mag': False},
+                                                {'gain': 0.3},
                                                 ])
 
     nao_state_publisher_launch = IncludeLaunchDescription(
@@ -98,7 +102,11 @@ def generate_launch_description():
                                  parameters=[{'port': 10002}],
                                  remappings=[('image', 'image_bot')])
 
+    sim_clock_node = Node(package='wrestle', executable='sim_clock',
+                          remappings=[('battery', 'sensors/battery')])
+
     return LaunchDescription([
+        use_sim_time,
         nao_lola_client_node,
         ik_node,
         nao_phase_provider_node,
@@ -107,7 +115,7 @@ def generate_launch_description():
         lower_arms,
         getup_back_node,
         getup_front_node,
-        # lean_forward_node,
+        lean_forward_node,
         # twist_forward,
         motion_manager_node,
         imu_filter_madgwick_node,
@@ -115,4 +123,5 @@ def generate_launch_description():
         rviz_node,
         webots_nao_camera_top,
         webots_nao_camera_bot,
+        sim_clock_node,
     ])
