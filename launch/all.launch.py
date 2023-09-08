@@ -102,6 +102,10 @@ def generate_launch_description():
                                  parameters=[{'port': 10002}],
                                  remappings=[('image', 'image_bot')])
 
+    send_goal_walk = ExecuteProcess(
+        cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.2}}}"'],
+        shell=True)
+
     return LaunchDescription([
         use_sim_time,
         nao_lola_client_node,
@@ -114,10 +118,11 @@ def generate_launch_description():
         getup_front_node,
         lean_forward_node,
         # twist_forward,
-        motion_manager_node,
+        # motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
         rviz_node,
         webots_nao_camera_top,
         webots_nao_camera_bot,
+        send_goal_walk,
     ])
