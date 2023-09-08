@@ -12,7 +12,6 @@ find_package(lifecycle_msgs REQUIRED)
 find_package(nao_lola_sensor_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(rosgraph_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(tf2 REQUIRED)
@@ -24,7 +23,6 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   nao_lola_sensor_msgs
   rclcpp
   rclcpp_components
-  rosgraph_msgs
   sensor_msgs
   std_msgs
   tf2
@@ -46,22 +44,6 @@ ament_target_dependencies(motion_manager_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
 ament_export_targets(export_motion_manager HAS_LIBRARY_TARGET)
 ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-# Build SimClockNode
-add_library(sim_clock_node SHARED
-  src/sim_clock_node.cpp)
-target_include_directories(sim_clock_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-
-rclcpp_components_register_node(sim_clock_node
-  PLUGIN "wrestle::SimClockNode"
-  EXECUTABLE sim_clock)
-
-ament_target_dependencies(sim_clock_node ${THIS_PACKAGE_INCLUDE_DEPENDS})
-
-ament_export_targets(export_sim_clock HAS_LIBRARY_TARGET)
-ament_export_dependencies(${THIS_PACKAGE_INCLUDE_DEPENDS})
-
 # Install
 install(
   DIRECTORY include/
@@ -69,13 +51,6 @@ install(
 install(
   TARGETS motion_manager_node
   EXPORT export_motion_manager
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  INCLUDES DESTINATION include)
-install(
-  TARGETS sim_clock_node
-  EXPORT export_sim_clock
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

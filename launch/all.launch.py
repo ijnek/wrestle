@@ -102,9 +102,6 @@ def generate_launch_description():
                                  parameters=[{'port': 10002}],
                                  remappings=[('image', 'image_bot')])
 
-    sim_clock_node = Node(package='wrestle', executable='sim_clock',
-                          remappings=[('battery', 'sensors/battery')])
-
     return LaunchDescription([
         use_sim_time,
         nao_lola_client_node,
@@ -123,5 +120,4 @@ def generate_launch_description():
         rviz_node,
         webots_nao_camera_top,
         webots_nao_camera_bot,
-        sim_clock_node,
     ])
