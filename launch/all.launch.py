@@ -12,18 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
+from webots_ros2_driver.webots_controller import WebotsController
 
 
 def generate_launch_description():
 
     # Set use_sim_time across all nodes
     use_sim_time = SetParameter(name='use_sim_time', value=True)
+
+    webots_controller_urdf_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'urdf', 'webots_controller.urdf'])
+    webots_controller = WebotsController(
+        robot_name=os.environ.get('WEBOTS_CONTROLLER_URL'),
+        parameters=[{'robot_description': webots_controller_urdf_path}])
 
     nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client')
 
@@ -108,6 +117,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         use_sim_time,
+        webots_controller,
         nao_lola_client_node,
         ik_node,
         nao_phase_provider_node,
