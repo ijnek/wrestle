@@ -27,9 +27,6 @@ from webots_ros2_driver.webots_controller import WebotsController
 
 def generate_launch_description():
 
-    # Set use_sim_time across all nodes
-    use_sim_time = SetParameter(name='use_sim_time', value=True)
-
     webots_controller_urdf_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'urdf', 'webots_controller.urdf'])
     webots_controller = WebotsController(
@@ -54,20 +51,20 @@ def generate_launch_description():
     getup_back_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
     getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                     parameters=[{'file': getup_back_pos_path}],
-                     remappings=[('start_pos_action', 'start_getup_back')])
+                           name='getup_back', parameters=[{'file': getup_back_pos_path}],
+                           remappings=[('start_pos_action', 'start_getup_back')])
 
     getup_front_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'getupFront.pos'])
     getup_front_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                     parameters=[{'file': getup_front_pos_path}],
-                     remappings=[('start_pos_action', 'start_getup_front')])
+                            name='getup_front', parameters=[{'file': getup_front_pos_path}],
+                            remappings=[('start_pos_action', 'start_getup_front')])
 
     lean_forward_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'leanForward.pos'])
     lean_forward_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                     parameters=[{'file': lean_forward_pos_path}],
-                     remappings=[('start_pos_action', 'start_lean_forward')])
+                             name='lean_forward', parameters=[{'file': lean_forward_pos_path}],
+                             remappings=[('start_pos_action', 'start_lean_forward')])
 
     # twist_forward = ExecuteProcess(
     #     cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
@@ -118,7 +115,6 @@ def generate_launch_description():
         shell=True)
 
     return LaunchDescription([
-        use_sim_time,
         webots_controller,
         RegisterEventHandler(  # Delay start of nao_lola_client
             OnProcessStart(
@@ -141,7 +137,7 @@ def generate_launch_description():
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
         rviz_node,
-        webots_nao_camera_top,
-        webots_nao_camera_bot,
+        # webots_nao_camera_top,
+        # webots_nao_camera_bot,
         send_goal_walk,
     ])
