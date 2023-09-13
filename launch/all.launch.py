@@ -15,9 +15,7 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription, RegisterEventHandler, \
-    TimerAction
-from launch.event_handlers import OnProcessStart
+from launch.actions import ExecuteProcess, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import Node, SetParameter
@@ -116,14 +114,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         webots_controller,
-        RegisterEventHandler(  # Delay start of nao_lola_client
-            OnProcessStart(
-                target_action=webots_controller,
-                on_start=[
-                    TimerAction(period=2.0, actions=[nao_lola_client_node]),
-                ]
-            )
-        ),
+        nao_lola_client_node,
         ik_node,
         nao_phase_provider_node,
         walk_node,
@@ -136,7 +127,7 @@ def generate_launch_description():
         # motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
-        rviz_node,
+        # rviz_node,
         # webots_nao_camera_top,
         # webots_nao_camera_bot,
         send_goal_walk,
