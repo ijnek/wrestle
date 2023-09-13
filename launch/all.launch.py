@@ -124,11 +124,11 @@ def generate_launch_description():
         getup_front_node,
         lean_forward_node,
         # twist_forward,
-        # motion_manager_node,
+        motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
         # rviz_node,
         # webots_nao_camera_top,
         # webots_nao_camera_bot,
-        send_goal_walk,
+        # send_goal_walk,
     ])

@@ -42,6 +42,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr timer_use_sonar_readings_;
+  rclcpp::TimerBase::SharedPtr timer_stop_walking_;
 
   // Callbacks
   void imuCallback(const sensor_msgs::msg::Imu & msg);
@@ -50,10 +51,13 @@ private:
   void timerUseSonarReadingsCallback();
 
   void stopWalk();
+  void setTwistToZero();
 
   float pitch_ = 0.0;
   bool obstacle_in_front_ = false;
   bool use_sonar_readings_ = false;
+
+  geometry_msgs::msg::Twist target_twist;
 };
 
 
