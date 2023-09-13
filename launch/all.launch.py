@@ -109,7 +109,7 @@ def generate_launch_description():
                                  remappings=[('image', 'image_bot')])
 
     send_goal_walk = ExecuteProcess(
-        cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.2}}}"'],
+        cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.1}}}"'],
         shell=True)
 
     return LaunchDescription([
