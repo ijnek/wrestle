@@ -2,7 +2,7 @@
 <robot name="Nao">
     <webots>
         <!-- Plugin that declare the main Webots controller (gives access to the Webots API trough WebotsNode.robot) -->
-        <plugin type="wrestle.participant.NaoDriver" />
+        <plugin type="wrestle.participant.Participant" />
         <!-- Custom topic for the accelerometer and the gyro -->
         <plugin type="webots_ros2_driver::Ros2IMU">
             <!-- Set the topic name.  -->

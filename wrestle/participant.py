@@ -6,7 +6,7 @@ from . import umsgpack
 # Enable Msgpack Old Specification Compatibility Mode, which is used in LoLA
 umsgpack.compatibility = True
 
-class NaoDriver:
+class Participant:
     SOCK_PATH = "/tmp/robocup"
     TCP_BASE_PORT = 10000
     DOF = 25
