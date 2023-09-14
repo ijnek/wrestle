@@ -62,6 +62,7 @@ install(DIRECTORY launch pos rviz urdf
 install(PROGRAMS
   scripts/head_skill.py
   scripts/robot_detection.py
+  scripts/motion_manager.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

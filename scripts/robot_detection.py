@@ -11,9 +11,6 @@ import rclpy # Python library for ROS 2
 from rclpy.node import Node # Handles the creation of nodes
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
-import cv2 # OpenCV library
-import numpy as np
-from vision_msgs.msg import BoundingBox2D, Point2D
 from wrestle.image_processing import ImageProcessing
 from visualization_msgs.msg import Marker
 from ipm_interfaces.srv import MapPoint
@@ -50,7 +47,6 @@ class RobotDetection(Node):
     # Used to convert between ROS and OpenCV images
     self.br = CvBridge()
 
-    self.robot_bb_publisher = self.create_publisher(BoundingBox2D, 'robot_bb', 10)
     self.marker_publisher = self.create_publisher(Marker, 'opponent', 10)
 
     self.ipm_client = self.create_client(MapPoint, '/map_point_top', callback_group=client_cb_group)
@@ -70,8 +66,8 @@ class RobotDetection(Node):
 
     opponent_bb = ImageProcessing.locate_opponent(img)
 
-    if opponent_bb is not None:
-      self.robot_bb_publisher.publish(opponent_bb)
+    if opponent_bb is None:
+      return
 
     req = MapPoint.Request()
     req.plane = create_horizontal_plane()
