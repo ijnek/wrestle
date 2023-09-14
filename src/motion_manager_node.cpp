@@ -48,9 +48,8 @@ MotionManagerNode::MotionManagerNode(const rclcpp::NodeOptions & options)
   timer_ = create_wall_timer(10ms, std::bind(&MotionManagerNode::timerCallback, this));
   timer_use_sonar_readings_ =
     create_wall_timer(4000ms, std::bind(&MotionManagerNode::timerUseSonarReadingsCallback, this));
-  timer_stop_walking_ = create_wall_timer(20000ms, std::bind(&MotionManagerNode::setTwistToZero, this));
 
-  target_twist.linear.x = 0.1;
+  start_time_ = now();
 }
 
 void MotionManagerNode::imuCallback(const sensor_msgs::msg::Imu & msg)
@@ -93,6 +92,23 @@ void MotionManagerNode::timerCallback()
   }
 
   // Walk
+  auto time_elapsed = now() - start_time_;
+
+  geometry_msgs::msg::Twist target_twist;
+  if (time_elapsed < rclcpp::Duration(10s)) {
+    // Move forward
+    target_twist.linear.x = 0.1;
+  } else if (time_elapsed < rclcpp::Duration(25s)) {
+    // Move left
+    target_twist.linear.y = 0.1;
+  } else if (time_elapsed < rclcpp::Duration(55s)) {
+    // Move right
+    target_twist.linear.y = -0.1;
+  } else if (time_elapsed < rclcpp::Duration(85s)) {
+    // Move forward
+    target_twist.linear.x = 0.1;
+  }
+
   pub_twist_->publish(target_twist);
 }
 
@@ -100,11 +116,6 @@ void MotionManagerNode::timerUseSonarReadingsCallback()
 {
   use_sonar_readings_ = true;
   timer_use_sonar_readings_->cancel();
-}
-
-void MotionManagerNode::setTwistToZero()
-{
-  target_twist.linear.x = 0.0;
 }
 
 void MotionManagerNode::stopWalk()
