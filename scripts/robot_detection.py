@@ -13,8 +13,15 @@ from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
 import cv2 # OpenCV library
 import numpy as np
-from vision_msgs.msg import BoundingBox2D
+from vision_msgs.msg import BoundingBox2D, Point2D
 from wrestle.image_processing import ImageProcessing
+from visualization_msgs.msg import Marker
+from ipm_interfaces.srv import MapPoint
+from ipm_library.utils import create_horizontal_plane
+from rclpy.executors import MultiThreadedExecutor
+from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+
+ROBOT_HEIGHT = 0.58
 
 class RobotDetection(Node):
   """
@@ -27,37 +34,71 @@ class RobotDetection(Node):
     # Initiate the Node class's constructor and give it a name
     super().__init__('robot_detection')
 
+    client_cb_group = MutuallyExclusiveCallbackGroup()
+    sub_cb_group = MutuallyExclusiveCallbackGroup()
+
     # Create the subscriber. This subscriber will receive an Image
     # from the video_frames topic. The queue size is 10 messages.
     self.subscription = self.create_subscription(
       Image,
       'image',
       self.listener_callback,
-      10)
+      10,
+      callback_group=sub_cb_group)
     self.subscription # prevent unused variable warning
 
     # Used to convert between ROS and OpenCV images
     self.br = CvBridge()
 
     self.robot_bb_publisher = self.create_publisher(BoundingBox2D, 'robot_bb', 10)
+    self.marker_publisher = self.create_publisher(Marker, 'opponent', 10)
+
+    self.ipm_client = self.create_client(MapPoint, '/map_point_top', callback_group=client_cb_group)
+    while not self.ipm_client.wait_for_service(timeout_sec=1.0):
+      self.get_logger().info('service not available, waiting again...')
 
   def listener_callback(self, data):
     """
     Callback function.
     """
+    self.data = data
     # Display the message on the console
-    self.get_logger().info('Receiving video frame')
+    # self.get_logger().info('Receiving video frame')
 
     # Convert ROS Image message to OpenCV image
-    current_frame = self.br.imgmsg_to_cv2(data)
-    self.detect_robot(current_frame)
-
-  def detect_robot(self, img):
+    img = self.br.imgmsg_to_cv2(data)
 
     opponent_bb = ImageProcessing.locate_opponent(img)
 
     if opponent_bb is not None:
       self.robot_bb_publisher.publish(opponent_bb)
+
+    req = MapPoint.Request()
+    req.plane = create_horizontal_plane()
+    req.point.x = opponent_bb.center.position.x
+    req.point.y = opponent_bb.center.position.y + 0.5 * opponent_bb.size_y
+    req.time = data.header.stamp
+    req.plane_frame_id = 'base_footprint'
+    req.output_frame_id = 'base_footprint'
+    # print(req)
+    resp = self.ipm_client.call(req)
+    if resp.result == MapPoint.Response.RESULT_SUCCESS:
+      self.publish_robot_marker(resp.point)
+    else:
+      print("mapping failed. status: ", resp.result)
+
+  def publish_robot_marker(self, point):
+    marker = Marker()
+    marker.header = point.header
+    marker.type = Marker.CUBE
+    marker.pose.position = point.point
+    marker.pose.position.z = marker.pose.position.z + ROBOT_HEIGHT / 2.0
+    marker.scale.x = 0.3
+    marker.scale.y = 0.3
+    marker.scale.z = ROBOT_HEIGHT
+    marker.color.r = 1.0
+    marker.color.a = 1.0
+    self.marker_publisher.publish(marker)
 
 def main(args=None):
 
@@ -68,7 +109,9 @@ def main(args=None):
   robot_detection = RobotDetection()
 
   # Spin the node so the callback function is called.
-  rclpy.spin(robot_detection)
+  executor = MultiThreadedExecutor()
+  executor.add_node(robot_detection)
+  executor.spin()
 
   # Destroy the node explicitly
   # (optional - otherwise it will be done automatically

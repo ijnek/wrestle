@@ -60,6 +60,7 @@ install(
 install(DIRECTORY launch pos rviz urdf
   DESTINATION share/${PROJECT_NAME}/)
 install(PROGRAMS
+  scripts/head_skill.py
   scripts/robot_detection.py
   DESTINATION lib/${PROJECT_NAME}
 )

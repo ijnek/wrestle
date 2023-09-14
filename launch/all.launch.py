@@ -15,15 +15,18 @@
 import os
 
 from launch import LaunchDescription
-from launch.actions import ExecuteProcess, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node, SetParameter
 from launch_ros.substitutions import FindPackageShare
 from webots_ros2_driver.webots_controller import WebotsController
 
 
 def generate_launch_description():
+
+    rviz_launch_arg = DeclareLaunchArgument('rviz', default_value='False')
 
     webots_controller_urdf_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'urdf', 'webots_controller.urdf'])
@@ -104,6 +107,7 @@ def generate_launch_description():
         executable='rviz2',
         name='rviz2',
         arguments=['-d', rviz_config_path],
+        condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
     send_goal_walk = ExecuteProcess(
@@ -134,7 +138,14 @@ def generate_launch_description():
                                            ('projected_point_cloud', 'projected_point_cloud_bot')],
                                parameters=[{'type': 'rgb_image'}])
 
+    head_skill_node = Node(package='wrestle', executable='head_skill.py')
+
+    ipm_service_node_top = Node(package='ipm_service', executable='ipm_service', name='ipm_service_top',
+                                remappings=[('camera_info', 'camera_info_top'),
+                                            ('map_point', 'map_point_top')])
+
     return LaunchDescription([
+        rviz_launch_arg,
         webots_controller,
         nao_lola_client_node,
         ik_node,
@@ -146,15 +157,17 @@ def generate_launch_description():
         getup_front_node,
         # lean_forward_node,
         # twist_forward,
-        motion_manager_node,
+        # motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
         rviz_node,
         # send_goal_walk,
-        # robot_detection_node,
+        robot_detection_node,
         base_footprint_node,
-        # cameratop_tf_publisher,
-        # camerabot_tf_publisher,
+        cameratop_tf_publisher,
+        camerabot_tf_publisher,
         # ipm_node_top_camera,
         # ipm_node_bot_camera,
+        head_skill_node,
+        ipm_service_node_top,
     ])
