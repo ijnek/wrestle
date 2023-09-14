@@ -38,16 +38,6 @@ class Participant:
         # initialize stuff
         self.findAndEnableDevices()
 
-        # # initialize top image sender
-        # w = self.cameraTop.getWidth()
-        # h = self.cameraTop.getHeight()
-        # self.topImageServer = ImageServer(self.args.tcam_addr, w, h, CamIndex.TOP)
-
-        # # initialize bottom image sender
-        # w = self.cameraBottom.getWidth()
-        # h = self.cameraBottom.getHeight()
-        # self.bottomImageServer = ImageServer(self.args.bcam_addr, w, h, CamIndex.BOTTOM)
-
         self.setupSocket()
 
     def setupSocket(self):
@@ -77,9 +67,6 @@ class Participant:
         self.minPhalanxMotorPosition = []
         self.pos = []
         self.motors = []
-
-        # self.cameraTop = self.__robot.getDevice("CameraTop")
-        # self.cameraBottom = self.__robot.getDevice("CameraBottom")
 
         self.accelerometer = self.__robot.getDevice('accelerometer')
         self.gyro = self.__robot.getDevice('gyro')
@@ -123,9 +110,6 @@ class Participant:
             self.motors.append(self.__robot.getDevice(j))
 
         # enable devices
-        # self.cameraTop.enable(self.__robot.frametime)
-        # self.cameraBottom.enable(self.__robot.frametime)
-
         self.accelerometer.enable(self.timeStep)
         self.gyro.enable(self.timeStep)
         # self.inertialUnit.enable(self.timeStep)

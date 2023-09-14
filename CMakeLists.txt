@@ -59,6 +59,10 @@ install(
   INCLUDES DESTINATION include)
 install(DIRECTORY launch pos rviz urdf
   DESTINATION share/${PROJECT_NAME}/)
+install(PROGRAMS
+  scripts/robot_detection.py
+  DESTINATION lib/${PROJECT_NAME}
+)
 
 # Install Python modules
 ament_python_install_package(${PROJECT_NAME})

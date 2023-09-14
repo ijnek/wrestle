@@ -29,7 +29,12 @@ def generate_launch_description():
         [FindPackageShare('wrestle'), 'urdf', 'webots_controller.urdf'])
     webots_controller = WebotsController(
         robot_name=os.environ.get('WEBOTS_CONTROLLER_URL'),
-        parameters=[{'robot_description': webots_controller_urdf_path}])
+        parameters=[{'robot_description': webots_controller_urdf_path}],
+        output='screen',
+        remappings=[('participant/CameraTop/image_color', 'image_top'),
+                    ('participant/CameraBottom/image_color', 'image_bot'),
+                    ('participant/CameraTop/camera_info', 'camera_info_top'),
+                    ('participant/CameraBottom/camera_info', 'camera_info_bot')])
 
     nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client')
 
@@ -101,16 +106,33 @@ def generate_launch_description():
         arguments=['-d', rviz_config_path],
     )
 
-    webots_nao_camera_top = Node(package='webots_nao_camera', executable='webots_nao_camera',
-                                 parameters=[{'port': 10001}],
-                                 remappings=[('image', 'image_top')])
-    webots_nao_camera_bot = Node(package='webots_nao_camera', executable='webots_nao_camera',
-                                 parameters=[{'port': 10002}],
-                                 remappings=[('image', 'image_bot')])
-
     send_goal_walk = ExecuteProcess(
         cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.1}}}"'],
         shell=True)
+
+    robot_detection_node = Node(package='wrestle', executable='robot_detection.py',
+                                remappings=[('image', 'image_top')])
+
+    base_footprint_node = Node(package='humanoid_base_footprint', executable='base_footprint',
+                                remappings=[('walk_support_state', 'phase')])
+
+    cameratop_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
+                                  arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraTop_optical_frame', 'CameraTop'])
+
+    camerabot_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
+                                  arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraBottom_optical_frame', 'CameraBottom'])
+
+    ipm_node_top_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_top',
+                               remappings=[('camera_info', 'camera_info_top'),
+                                           ('input', 'image_top'),
+                                           ('projected_point_cloud', 'projected_point_cloud_top')],
+                               parameters=[{'type': 'rgb_image'}])
+
+    ipm_node_bot_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_bot',
+                               remappings=[('camera_info', 'camera_info_bot'),
+                                           ('input', 'image_bot'),
+                                           ('projected_point_cloud', 'projected_point_cloud_bot')],
+                               parameters=[{'type': 'rgb_image'}])
 
     return LaunchDescription([
         webots_controller,
@@ -122,13 +144,17 @@ def generate_launch_description():
         lower_arms,
         getup_back_node,
         getup_front_node,
-        lean_forward_node,
+        # lean_forward_node,
         # twist_forward,
         motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
-        # rviz_node,
-        # webots_nao_camera_top,
-        # webots_nao_camera_bot,
+        rviz_node,
         # send_goal_walk,
+        robot_detection_node,
+        base_footprint_node,
+        cameratop_tf_publisher,
+        camerabot_tf_publisher,
+        ipm_node_top_camera,
+        ipm_node_bot_camera,
     ])
