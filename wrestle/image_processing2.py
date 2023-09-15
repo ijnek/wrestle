@@ -102,7 +102,7 @@ def locate_opponent(image):
     mask_bound = mask_inside_boundary(r_mask)
     final_mask = cv2.bitwise_and(w_mask, mask_bound)
     contour = get_largest_countour(final_mask)
-    overlay_countour(image, contour)
+    # overlay_countour(image, contour)
     bbox2d = get_bbox_2d(contour)
     if bbox2d.size_y > 10:
       return bbox2d
