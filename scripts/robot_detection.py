@@ -11,7 +11,7 @@ import rclpy # Python library for ROS 2
 from rclpy.node import Node # Handles the creation of nodes
 from sensor_msgs.msg import Image # Image is the message type
 from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
-from wrestle.image_processing import ImageProcessing
+from wrestle.image_processing2 import locate_opponent
 from visualization_msgs.msg import Marker
 from ipm_interfaces.srv import MapPoint
 from ipm_library.utils import create_horizontal_plane
@@ -67,7 +67,7 @@ class RobotDetection(Node):
     # Convert ROS Image message to OpenCV image
     img = self.br.imgmsg_to_cv2(data)
 
-    opponent_bb = ImageProcessing.locate_opponent(img)
+    opponent_bb = locate_opponent(img)
 
     if opponent_bb is None:
       return

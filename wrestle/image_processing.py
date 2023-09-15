@@ -85,6 +85,9 @@ class ImageProcessing():
         largest_contour = cls.get_largest_contour(closing)
 
         if largest_contour is not None:
+            cv2.drawContours(img, [largest_contour], 0, (0,255,0), 3)
+            cv2.imshow("img", img)
+            cv2.waitKey(1)
             return cls.get_bbox_2d(largest_contour)
         else:
             return None
