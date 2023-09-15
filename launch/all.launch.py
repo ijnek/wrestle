@@ -46,16 +46,14 @@ def generate_launch_description():
     nao_phase_provider_node = Node(package='nao_phase_provider', executable='nao_phase_provider',
                                    remappings=[('fsr', 'sensors/fsr')])
 
-    walk_node = Node(package='walk', executable='walk', remappings=[('imu', 'sensors/imu')])
+    walk_node = Node(package='walk', executable='walk', remappings=[('imu', 'sensors/imu')],
+                     parameters=[{'max_forward': 0.4},
+                                 {'sole_z': -0.29}])
 
     nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion')
 
-    lower_arms = ExecuteProcess(
-        cmd=['ros2 topic pub /effectors/joint_positions nao_lola_command_msgs/msg/JointPositions "{indexes: [2, 18], positions: [1.517, 1.517]}"'],
-        shell=True)
-
     getup_back_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
+        [FindPackageShare('wrestle'), 'pos', 'getupBack2.pos'])
     getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                            name='getup_back', parameters=[{'file': getup_back_pos_path}],
                            remappings=[('start_pos_action', 'start_getup_back')])
@@ -114,8 +112,13 @@ def generate_launch_description():
         cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.1}}}"'],
         shell=True)
 
-    robot_detection_node = Node(package='wrestle', executable='robot_detection.py',
-                                remappings=[('image', 'image_top')])
+    robot_detection_node_top = Node(package='wrestle', executable='robot_detection.py',
+                                    remappings=[('image', 'image_bot'),
+                                                ('map_point', 'map_point_top')])
+
+    robot_detection_node_bot = Node(package='wrestle', executable='robot_detection.py',
+                                    remappings=[('image', 'image_bot'),
+                                                ('map_point', 'map_point_bot')])
 
     base_footprint_node = Node(package='humanoid_base_footprint', executable='base_footprint',
                                 remappings=[('walk_support_state', 'phase')])
@@ -144,8 +147,14 @@ def generate_launch_description():
                                 remappings=[('camera_info', 'camera_info_top'),
                                             ('map_point', 'map_point_top')])
 
+    ipm_service_node_bot = Node(package='ipm_service', executable='ipm_service', name='ipm_service_bot',
+                                remappings=[('camera_info', 'camera_info_bot'),
+                                            ('map_point', 'map_point_bot')])
+
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
                                   output='screen')
+
+    arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
 
     return LaunchDescription([
         rviz_launch_arg,
@@ -155,7 +164,6 @@ def generate_launch_description():
         nao_phase_provider_node,
         walk_node,
         nao_lola_conversion_node,
-        lower_arms,
         getup_back_node,
         getup_front_node,
         # lean_forward_node,
@@ -165,7 +173,8 @@ def generate_launch_description():
         nao_state_publisher_launch,
         rviz_node,
         # send_goal_walk,
-        robot_detection_node,
+        robot_detection_node_top,
+        robot_detection_node_bot,
         base_footprint_node,
         cameratop_tf_publisher,
         camerabot_tf_publisher,
@@ -173,5 +182,7 @@ def generate_launch_description():
         # ipm_node_bot_camera,
         head_skill_node,
         ipm_service_node_top,
+        ipm_service_node_bot,
         motion_manager_node_py,
+        arm_provider_node,
     ])

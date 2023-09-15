@@ -17,6 +17,7 @@ from ipm_interfaces.srv import MapPoint
 from ipm_library.utils import create_horizontal_plane
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
+from geometry_msgs.msg import PointStamped
 
 ROBOT_HEIGHT = 0.58
 
@@ -49,9 +50,11 @@ class RobotDetection(Node):
 
     self.marker_publisher = self.create_publisher(Marker, 'opponent', 10)
 
-    self.ipm_client = self.create_client(MapPoint, '/map_point_top', callback_group=client_cb_group)
+    self.ipm_client = self.create_client(MapPoint, 'map_point', callback_group=client_cb_group)
     while not self.ipm_client.wait_for_service(timeout_sec=1.0):
       self.get_logger().info('service not available, waiting again...')
+
+    self.point_publisher = self.create_publisher(PointStamped, 'opponent_point', 10)
 
   def listener_callback(self, data):
     """
@@ -78,7 +81,15 @@ class RobotDetection(Node):
     req.output_frame_id = 'base_footprint'
     # print(req)
     resp = self.ipm_client.call(req)
+
+    max_detection_dist = 4.0
+    if resp.point.point.x**2 + resp.point.point.y**2 > max_detection_dist**2:
+      # Ignore the detection, too far away and probably false positive
+      self.get_logger().info('false positive!')
+      return
+
     if resp.result == MapPoint.Response.RESULT_SUCCESS:
+      self.point_publisher.publish(resp.point)
       self.publish_robot_marker(resp.point)
     else:
       print("mapping failed. status: ", resp.result)

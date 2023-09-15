@@ -57,12 +57,13 @@ install(
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
   INCLUDES DESTINATION include)
-install(DIRECTORY launch pos rviz urdf
+install(DIRECTORY launch plotjuggler pos rviz urdf
   DESTINATION share/${PROJECT_NAME}/)
 install(PROGRAMS
   scripts/head_skill.py
   scripts/robot_detection.py
   scripts/motion_manager.py
+  scripts/arm_provider.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

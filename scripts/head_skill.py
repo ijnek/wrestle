@@ -9,8 +9,8 @@ from wrestle.image_processing import ImageProcessing
 from nao_lola_command_msgs.msg import JointIndexes, JointPositions
 from math import sin, pi, radians
 
-MAX_YAW = 0.5
-PERIOD = 5.0
+MAX_YAW = 0.7
+PERIOD = 3.0
 
 class HeadSkill(Node):
 
@@ -28,7 +28,7 @@ class HeadSkill(Node):
 
     msg = JointPositions()
     msg.indexes = [JointIndexes.HEADPITCH, JointIndexes.HEADYAW]
-    msg.positions = [radians(25), headyaw]
+    msg.positions = [radians(-15), headyaw]
     self.publisher.publish(msg)
 
 def main(args=None):
