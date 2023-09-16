@@ -9,7 +9,7 @@ from wrestle.image_processing import ImageProcessing
 from nao_lola_command_msgs.msg import JointIndexes, JointPositions
 from math import sin, pi, radians
 
-MAX_YAW = 0.7
+MAX_YAW = 0.4
 PERIOD = 3.0
 
 class HeadSkill(Node):

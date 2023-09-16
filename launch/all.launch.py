@@ -155,7 +155,10 @@ def generate_launch_description():
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
                                   output='screen')
 
+
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
+
+    crouch_node = Node(package='wrestle', executable='crouch.py', output='screen')
 
     return LaunchDescription([
         rviz_launch_arg,
@@ -186,4 +189,5 @@ def generate_launch_description():
         ipm_service_node_bot,
         motion_manager_node_py,
         arm_provider_node,
+        crouch_node,
     ])
