@@ -21,10 +21,12 @@ cv2.createTrackbar('HMax','image',0,179,nothing)
 cv2.createTrackbar('SMax','image',0,255,nothing)
 cv2.createTrackbar('VMax','image',0,255,nothing)
 
-# Set default value for MAX HSV trackbars.
-cv2.setTrackbarPos('HMax', 'image', 179)
-cv2.setTrackbarPos('SMax', 'image', 255)
-cv2.setTrackbarPos('VMax', 'image', 255)
+cv2.setTrackbarPos('HMin', 'image', 0)
+cv2.setTrackbarPos('SMin', 'image', 0)
+cv2.setTrackbarPos('VMin', 'image', 0)
+cv2.setTrackbarPos('HMax', 'image', 90)
+cv2.setTrackbarPos('SMax', 'image', 65)
+cv2.setTrackbarPos('VMax', 'image', 180)
 
 # Initialize to check if HSV min/max value changes
 hMin = sMin = vMin = hMax = sMax = vMax = 0

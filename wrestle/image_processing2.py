@@ -6,8 +6,8 @@ from vision_msgs.msg import BoundingBox2D
 # https://stackoverflow.com/a/58194879
 def white_mask(img):
   img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-  lower = np.array([90,0,0])
-  upper = np.array([113,255,255])
+  lower = np.array([0, 0, 0])
+  upper = np.array([90,65,180])
   mask = cv2.inRange(img, lower, upper)
   return mask
 
@@ -76,7 +76,7 @@ def get_largest_countour(mask):
 
 def overlay_countour(img, contour):
   if contour is not None:
-    print("countour: ", contour)
+    # print("countour: ", contour)
     cv2.drawContours(img, [contour], 0, (0,255,0), 3)
   cv2.imshow("img", img)
   cv2.waitKey(1)
@@ -110,18 +110,22 @@ def locate_opponent(image):
 
 
 if __name__ == '__main__':
-  image = cv2.imread('images/130.png')
-  w_mask = white_mask(image)
-  cv2.imshow("white_mask", w_mask)
-  r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
-  cv2.imshow("red_mask", r_mask)
-  mask_bound = mask_inside_boundary(r_mask)
-  cv2.imshow("mask_bound", mask_bound)
-  final_mask = cv2.bitwise_and(w_mask, mask_bound)
-  cv2.imshow("final_mask", final_mask)
 
-  contour = get_largest_countour(final_mask)
-  overlay_countour(image, contour)
+  for i in range(0, 500):
+    print(i)
+    image = cv2.imread(f'images/{i}.png')
+    cv2.imshow("image", image)
+    w_mask = white_mask(image)
+    cv2.imshow("white_mask", w_mask)
+    r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
+    cv2.imshow("red_mask", r_mask)
+    mask_bound = mask_inside_boundary(r_mask)
+    cv2.imshow("mask_bound", mask_bound)
+    final_mask = cv2.bitwise_and(w_mask, mask_bound)
+    cv2.imshow("final_mask", final_mask)
 
-  cv2.waitKey(0)
+    contour = get_largest_countour(final_mask)
+    overlay_countour(image, contour)
+
+    cv2.waitKey(20)
   cv2.destroyAllWindows()
