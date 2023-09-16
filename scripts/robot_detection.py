@@ -85,7 +85,7 @@ class RobotDetection(Node):
     max_detection_dist = 4.0
     if resp.point.point.x**2 + resp.point.point.y**2 > max_detection_dist**2:
       # Ignore the detection, too far away and probably false positive
-      self.get_logger().info('false positive!')
+      # self.get_logger().info('false positive!')
       return
 
     if resp.result == MapPoint.Response.RESULT_SUCCESS:

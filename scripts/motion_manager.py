@@ -8,7 +8,7 @@ from walk_interfaces.action import Walk
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from geometry_msgs.msg import Twist, PointStamped
-from math import atan2, sin, cos
+from math import atan2
 from walk_interfaces.action import Crouch
 from math import radians
 
@@ -27,11 +27,13 @@ class MotionManager(Node):
                                                           self.opponent_callback, 10)
 
     self.crouch_action_client = ActionClient(self, Crouch, 'motion/crouch')
+    self.crouch_action_client.wait_for_server(timeout_sec=5.0)
 
     self.last_twist = None
 
     self.last_time_opponent_detected = self.get_clock().now()
-    self.opponent_heading_average = 0.0
+    self.opponent_heading_average = 0.0  # rad
+    self.opponent_distance = 10000.0  # m
 
     self.initial = True
     self.crouched = False
@@ -41,7 +43,7 @@ class MotionManager(Node):
     # Decide on twist here
 
     heading = atan2(opponent_point.point.y, opponent_point.point.x)
-    self.get_logger().info('Heading: %f' % heading)
+    # self.get_logger().info('Heading: %f' % heading)
     self.opponent_heading_average = self.opponent_heading_average * 0.7 + heading * 0.3
     # print("self.opponent_heading_average: ", self.opponent_heading_average)
     self.last_time_opponent_detected = Time.from_msg(opponent_point.header.stamp)
@@ -50,7 +52,6 @@ class MotionManager(Node):
     self.crouched = True
 
   def timer_callback(self):
-
     if self.initial:
       self._send_goal_future = self.crouch_action_client.send_goal_async(Crouch.Goal())
       self._send_goal_future.add_done_callback(self.crouch_done_callback)
@@ -73,12 +74,11 @@ class MotionManager(Node):
     elif self.spin and abs(self.opponent_heading_average) < radians(10):
       # print("not spin!")
       self.spin = False
-
     if self.spin:
       twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
     else:
       twist.linear.x = 0.4
-      twist.angular.z = self.opponent_heading_average * 0.5
+      twist.angular.z = 0.0
 
     walk_goal = Walk.Goal()
     walk_goal.twist = twist

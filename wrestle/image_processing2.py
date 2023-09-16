@@ -50,12 +50,11 @@ def mask_inside_boundary(r_mask):
       for j in range(0, y):
         mask_outside[j][i] = 255
 
-  print(r_mask.shape)
-  # for i in range(0, r_mask.shape[1]):
-  #   for j in range(0, 10):
-  #     mask_outside[j][i] = 255
-  #   for j in range(r_mask.shape[0] - 10, r_mask.shape[0]):
-  #     mask_outside[j][i] = 255
+  for i in range(r_mask.shape[0]):
+    for j in range(0, 10):
+      mask_outside[i][j] = 255
+    for j in range(r_mask.shape[1] - 10, r_mask.shape[1]):
+      mask_outside[i][j] = 255
 
   return cv2.bitwise_not(mask_outside)
 

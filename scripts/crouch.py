@@ -29,7 +29,7 @@ class Crouch(Node):
       self.execute_callback)
 
   def execute_callback(self, goal_handle):
-    self.get_logger().info('Executing goal...')
+    # self.get_logger().info('Executing crouch...')
     result = CrouchAction.Result()
 
     self.time_start = self.get_clock().now()
@@ -54,6 +54,7 @@ class Crouch(Node):
 
       time_since_start = (self.get_clock().now() - self.time_start).nanoseconds / 1000000000.0
 
+    # self.get_logger().info('Done crouch...')
     goal_handle.succeed()
     return result
 

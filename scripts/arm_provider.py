@@ -19,6 +19,7 @@ class ArmProvider(Node):
     self.sole_poses = None
     self.time_start = self.get_clock().now()
     self.obstacle_in_front = False
+    self.time_since_obstacle_detected = None
 
   def sp_callback(self, sole_poses):
     self.sole_poses = sole_poses
@@ -27,7 +28,8 @@ class ArmProvider(Node):
     time_since_start = (self.get_clock().now() - self.time_start).nanoseconds / 1000000000.0
     if time_since_start < 4.0:
       return
-    self.obstacle_in_front = sonar.left < 0.5 or sonar.right < 0.5
+    if sonar.left < 0.4 or sonar.right < 0.4:
+      self.time_since_obstacle_detected = self.get_clock().now()
 
   def timer_callback(self):
     if self.sole_poses is None:
@@ -37,10 +39,17 @@ class ArmProvider(Node):
     msg.indexes = [JointIndexes.LSHOULDERPITCH, JointIndexes.RSHOULDERPITCH,
                    JointIndexes.LSHOULDERROLL, JointIndexes.RSHOULDERROLL]
 
-    if self.obstacle_in_front:
-      msg.positions = [radians(0), radians(0), radians(7), radians(-7)]
+    if self.time_since_obstacle_detected is not None:
+      push_obstacle = ((self.get_clock().now() - self.time_since_obstacle_detected).nanoseconds / 1e9) < 1.0
     else:
-      # Calculate from sole pose
+      push_obstacle = False
+
+    if push_obstacle:
+      # self.get_logger().info("Push obstacle!")
+      # Put arms up
+      msg.positions = [radians(0), radians(0), radians(-7), radians(7)]
+    else:
+      # Swing arms
       mult = 10.0
       l_shoulder_pitch = radians(90) + mult * self.sole_poses.l_sole.position.x
       r_shoulder_pitch = radians(90) + mult * self.sole_poses.r_sole.position.x
