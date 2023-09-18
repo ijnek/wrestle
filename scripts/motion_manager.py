@@ -38,6 +38,8 @@ class MotionManager(Node):
     self.crouch_action_client = ActionClient(self, Crouch, 'motion/crouch')
     self.crouch_action_client.wait_for_server(timeout_sec=5.0)
 
+    self.time_crouch_completed = None
+
     self.last_twist = None
 
     self.last_time_opponent_detected = self.get_clock().now()
@@ -70,6 +72,7 @@ class MotionManager(Node):
 
   def crouch_result_callback(self, _):
     self.crouched = True
+    self.time_crouch_completed = self.get_clock().now()
 
   def getup_goal_response_callback(self, future):
     goal_handle = future.result()
@@ -130,6 +133,8 @@ class MotionManager(Node):
     twist = Twist()
     time_elapsed_since_opponent_detected = \
       (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
+    time_elapsed_since_crouch_finished = \
+      (self.get_clock().now() - self.time_crouch_completed).nanoseconds / 1e9
 
     if time_elapsed_since_opponent_detected > 2.0:
       self.spin = True
@@ -139,11 +144,13 @@ class MotionManager(Node):
     elif self.spin and abs(self.opponent_heading_average) < radians(10):
       # print("not spin!")
       self.spin = False
-    if self.spin:
-      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
-    else:
-      twist.linear.x = 0.4
-      twist.angular.z = 0.0
+
+    if time_elapsed_since_crouch_finished > 1.0:
+      if self.spin:
+        twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
+      else:
+        twist.linear.x = 0.4
+        twist.angular.z = 0.0
 
     walk_goal = Walk.Goal()
     walk_goal.twist = twist
