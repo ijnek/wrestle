@@ -59,6 +59,8 @@ def mask_inside_boundary(r_mask):
   return cv2.bitwise_not(mask_outside)
 
 def overlay_lines(img, lines):
+  if lines is None:
+    return img
   for line in lines:
       pt1 = (line[0][0],line[0][1])
       pt2 = (line[0][2],line[0][3])

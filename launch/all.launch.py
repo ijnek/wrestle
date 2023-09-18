@@ -57,13 +57,25 @@ def generate_launch_description():
         [FindPackageShare('wrestle'), 'pos', 'getupBack2.pos'])
     getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                            name='getup_back', parameters=[{'file': getup_back_pos_path}],
-                           remappings=[('start_pos_action', 'start_getup_back')])
+                            remappings=[
+                                ('action/_action/feedback', 'getup_back/_action/feedback'),
+                                ('action/_action/status', 'getup_back/_action/status'),
+                                ('action/_action/cancel_goal', 'getup_back/_action/cancel_goal'),
+                                ('action/_action/get_result', 'getup_back/_action/get_result'),
+                                ('action/_action/send_goal', 'getup_back/_action/send_goal')
+                            ])
 
     getup_front_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'getupFront.pos'])
+        [FindPackageShare('wrestle'), 'pos', 'getupFront2.pos'])
     getup_front_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                             name='getup_front', parameters=[{'file': getup_front_pos_path}],
-                            remappings=[('start_pos_action', 'start_getup_front')])
+                            remappings=[
+                                ('action/_action/feedback', 'getup_front/_action/feedback'),
+                                ('action/_action/status', 'getup_front/_action/status'),
+                                ('action/_action/cancel_goal', 'getup_front/_action/cancel_goal'),
+                                ('action/_action/get_result', 'getup_front/_action/get_result'),
+                                ('action/_action/send_goal', 'getup_front/_action/send_goal')
+                            ])
 
     lean_forward_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'leanForward.pos'])
@@ -153,7 +165,8 @@ def generate_launch_description():
                                             ('map_point', 'map_point_bot')])
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
-                                  output='screen')
+                                  output='screen',
+                                  remappings=[('imu', 'sensors/filtered_imu')])
 
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
@@ -177,15 +190,15 @@ def generate_launch_description():
         nao_state_publisher_launch,
         rviz_node,
         # send_goal_walk,
-        robot_detection_node_top,
+        # robot_detection_node_top,
         robot_detection_node_bot,
         base_footprint_node,
-        cameratop_tf_publisher,
+        # cameratop_tf_publisher,
         camerabot_tf_publisher,
         # ipm_node_top_camera,
         # ipm_node_bot_camera,
         head_skill_node,
-        ipm_service_node_top,
+        # ipm_service_node_top,
         ipm_service_node_bot,
         motion_manager_node_py,
         arm_provider_node,
