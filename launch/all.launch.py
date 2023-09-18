@@ -66,7 +66,7 @@ def generate_launch_description():
                             ])
 
     getup_front_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'getupFront2.pos'])
+        [FindPackageShare('wrestle'), 'pos', 'plank.pos'])
     getup_front_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                             name='getup_front', parameters=[{'file': getup_front_pos_path}],
                             remappings=[
