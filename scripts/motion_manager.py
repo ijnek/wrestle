@@ -93,7 +93,6 @@ class MotionManager(Node):
     # self.get_logger().info('Canceling goal')
     if self._walk_goal_handle is not None:
       self._walk_goal_handle.cancel_goal_async()
-      self.get_logger().info('Requested cancel!')
 
   def timer_callback(self):
     if self.initial:

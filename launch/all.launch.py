@@ -77,22 +77,6 @@ def generate_launch_description():
                                 ('action/_action/send_goal', 'getup_front/_action/send_goal')
                             ])
 
-    lean_forward_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'leanForward.pos'])
-    lean_forward_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                             name='lean_forward', parameters=[{'file': lean_forward_pos_path}],
-                             remappings=[('start_pos_action', 'start_lean_forward')])
-
-    # twist_forward = ExecuteProcess(
-    #     cmd=['ros2 topic pub --once /target geometry_msgs/msg/Twist "{linear: {x: 0.2}}"'],
-    #     shell=True)
-
-    motion_manager_node = Node(package='wrestle', executable='motion_manager',
-                               remappings=[('imu', 'sensors/filtered_imu'),
-                                           ('sonar', 'sensors/sonar'),
-                                           ('twist', 'target'),
-                                           ('walk_change_state', 'Walk/change_state')])
-
     imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
                                     executable='imu_filter_madgwick_node',
                                     remappings=[('imu/data_raw', 'sensors/imu'),
@@ -183,9 +167,6 @@ def generate_launch_description():
         nao_lola_conversion_node,
         getup_back_node,
         getup_front_node,
-        # lean_forward_node,
-        # twist_forward,
-        # motion_manager_node,
         imu_filter_madgwick_node,
         nao_state_publisher_launch,
         rviz_node,
