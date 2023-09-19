@@ -54,7 +54,7 @@ def generate_launch_description():
     nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion')
 
     getup_back_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'getupBack2.pos'])
+        [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
     getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                            name='getup_back', parameters=[{'file': getup_back_pos_path}],
                             remappings=[
@@ -66,7 +66,7 @@ def generate_launch_description():
                             ])
 
     getup_front_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'plank.pos'])
+        [FindPackageShare('wrestle'), 'pos', 'getupFront.pos'])
     getup_front_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
                             name='getup_front', parameters=[{'file': getup_front_pos_path}],
                             remappings=[

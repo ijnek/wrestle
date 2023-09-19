@@ -47,9 +47,9 @@ dictio = {
     'RHand': '0'
 }
 
-file_output = open('output.pos', 'w')
+file_output = open('/home/vscode/ws/src/wrestle/pos/getupFront.pos', 'w')
 
-with open('/home/vscode/ijnek_wrestle/controllers/motions/GetUpBack.motion', 'r') as motion_file:
+with open('/home/vscode/ijnek_wrestle/controllers/motions/GetUpFront.motion', 'r') as motion_file:
     total_time = 0
     for line in motion_file:
         line = line.rstrip('\n').split(',')
@@ -69,7 +69,6 @@ with open('/home/vscode/ijnek_wrestle/controllers/motions/GetUpBack.motion', 'r'
         duration = (int(s) * 1000 + int(ms)) - total_time
         total_time += duration
 
-        HeadYaw, HeadPitch, LElbowYaw, RElbowYaw, LWristYaw, RWristYaw, Lhand, RHand = ('0', '0', '0', '0', '0', '0', '0', '0')
         pos_line_list = ['!',
                          dictio['HeadPitch'],
                          dictio['HeadYaw'],
