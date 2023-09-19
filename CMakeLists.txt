@@ -11,9 +11,6 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 
 # Install
-install(
-  DIRECTORY include/
-  DESTINATION include)
 install(DIRECTORY launch plotjuggler pos rviz urdf
   DESTINATION share/${PROJECT_NAME}/)
 install(PROGRAMS
