@@ -159,6 +159,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         rviz_launch_arg,
+        motion_manager_node_py,
         webots_controller,
         nao_lola_client_node,
         ik_node,
@@ -181,7 +182,6 @@ def generate_launch_description():
         head_skill_node,
         # ipm_service_node_top,
         ipm_service_node_bot,
-        motion_manager_node_py,
         arm_provider_node,
         crouch_node,
     ])
