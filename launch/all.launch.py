@@ -150,6 +150,7 @@ def generate_launch_description():
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
                                 #   output='screen'
+                                remappings=[('imu', 'sensors/filtered_imu')],
                                   )
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
