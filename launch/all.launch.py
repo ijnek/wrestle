@@ -33,7 +33,7 @@ def generate_launch_description():
     webots_controller = WebotsController(
         robot_name=os.environ.get('WEBOTS_CONTROLLER_URL'),
         parameters=[{'robot_description': webots_controller_urdf_path}],
-        output='screen',
+        # output='screen',
         remappings=[('participant/CameraTop/image_color', 'image_top'),
                     ('participant/CameraBottom/image_color', 'image_bot'),
                     ('participant/CameraTop/camera_info', 'camera_info_top'),
@@ -105,13 +105,13 @@ def generate_launch_description():
         condition=IfCondition(LaunchConfiguration('rviz')),
     )
 
-    send_goal_walk = ExecuteProcess(
-        cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.1}}}"'],
-        shell=True)
+    # send_goal_walk = ExecuteProcess(
+    #     cmd=['ros2 action send_goal /walk walk_interfaces/action/Walk "{twist: {linear: {x: 0.1}}}"'],
+    #     shell=True)
 
-    robot_detection_node_top = Node(package='wrestle', executable='robot_detection.py',
-                                    remappings=[('image', 'image_bot'),
-                                                ('map_point', 'map_point_top')])
+    # robot_detection_node_top = Node(package='wrestle', executable='robot_detection.py',
+    #                                 remappings=[('image', 'image_bot'),
+    #                                             ('map_point', 'map_point_top')])
 
     robot_detection_node_bot = Node(package='wrestle', executable='robot_detection.py',
                                     remappings=[('image', 'image_bot'),
@@ -120,42 +120,43 @@ def generate_launch_description():
     base_footprint_node = Node(package='humanoid_base_footprint', executable='base_footprint',
                                 remappings=[('walk_support_state', 'phase')])
 
-    cameratop_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
-                                  arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraTop_optical_frame', 'CameraTop'])
+    # cameratop_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
+    #                               arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraTop_optical_frame', 'CameraTop'])
 
     camerabot_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
                                   arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraBottom_optical_frame', 'CameraBottom'])
 
-    ipm_node_top_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_top',
-                               remappings=[('camera_info', 'camera_info_top'),
-                                           ('input', 'image_top'),
-                                           ('projected_point_cloud', 'projected_point_cloud_top')],
-                               parameters=[{'type': 'rgb_image'}])
+    # ipm_node_top_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_top',
+    #                            remappings=[('camera_info', 'camera_info_top'),
+    #                                        ('input', 'image_top'),
+    #                                        ('projected_point_cloud', 'projected_point_cloud_top')],
+    #                            parameters=[{'type': 'rgb_image'}])
 
-    ipm_node_bot_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_bot',
-                               remappings=[('camera_info', 'camera_info_bot'),
-                                           ('input', 'image_bot'),
-                                           ('projected_point_cloud', 'projected_point_cloud_bot')],
-                               parameters=[{'type': 'rgb_image'}])
+    # ipm_node_bot_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_bot',
+    #                            remappings=[('camera_info', 'camera_info_bot'),
+    #                                        ('input', 'image_bot'),
+    #                                        ('projected_point_cloud', 'projected_point_cloud_bot')],
+    #                            parameters=[{'type': 'rgb_image'}])
 
     head_skill_node = Node(package='wrestle', executable='head_skill.py')
 
-    ipm_service_node_top = Node(package='ipm_service', executable='ipm_service', name='ipm_service_top',
-                                remappings=[('camera_info', 'camera_info_top'),
-                                            ('map_point', 'map_point_top')])
+    # ipm_service_node_top = Node(package='ipm_service', executable='ipm_service', name='ipm_service_top',
+    #                             remappings=[('camera_info', 'camera_info_top'),
+    #                                         ('map_point', 'map_point_top')])
 
     ipm_service_node_bot = Node(package='ipm_service', executable='ipm_service', name='ipm_service_bot',
                                 remappings=[('camera_info', 'camera_info_bot'),
                                             ('map_point', 'map_point_bot')])
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
-                                  output='screen',
-                                  remappings=[('imu', 'sensors/filtered_imu')])
-
+                                #   output='screen'
+                                  )
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
 
-    crouch_node = Node(package='wrestle', executable='crouch.py', output='screen')
+    crouch_node = Node(package='wrestle', executable='crouch.py',
+                    #    output='screen'
+                       )
 
     return LaunchDescription([
         rviz_launch_arg,

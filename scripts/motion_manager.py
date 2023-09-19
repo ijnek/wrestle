@@ -144,7 +144,7 @@ class MotionManager(Node):
       # print("not spin!")
       self.spin = False
 
-    if time_elapsed_since_crouch_finished > 1.0:
+    if time_elapsed_since_crouch_finished > 0.2:
       if self.spin:
         twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
       else:
