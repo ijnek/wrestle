@@ -1,5 +1,5 @@
-# Template Repo
+# Wrestle
 
-[![Build and Test (humble)](../../actions/workflows/build_and_test_humble.yaml/badge.svg?branch=rolling)](../../actions/workflows/build_and_test_humble.yaml?query=branch:rolling)
-[![Build and Test (iron)](../../actions/workflows/build_and_test_iron.yaml/badge.svg?branch=rolling)](../../actions/workflows/build_and_test_iron.yaml?query=branch:rolling)
-[![Build and Test (rolling)](../../actions/workflows/build_and_test_rolling.yaml/badge.svg?branch=rolling)](../../actions/workflows/build_and_test_rolling.yaml?query=branch:rolling)
+The majority of this codebase is licensed with the Apache 2.0 License.
+
+This code base reuses some code from the rUNSWift-2019 open source code release (which I wrote while my time at rUNSWift!), please refer to [LICENSE-runswift](LICENSE-runswift) for details of reuse.
