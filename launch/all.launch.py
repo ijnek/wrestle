@@ -168,15 +168,15 @@ def generate_launch_description():
         nao_lola_conversion_node,
         getup_back_node,
         getup_front_node,
-        imu_filter_madgwick_node,
-        nao_state_publisher_launch,
+        imu_filter_madgwick_node,  # Slow
+        nao_state_publisher_launch,  # Slow
         rviz_node,
         # send_goal_walk,
         # robot_detection_node_top,
         robot_detection_node_bot,
         base_footprint_node,
         # cameratop_tf_publisher,
-        camerabot_tf_publisher,
+        camerabot_tf_publisher,  # Feels slow
         # ipm_node_top_camera,
         # ipm_node_bot_camera,
         head_skill_node,
