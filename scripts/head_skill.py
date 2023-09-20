@@ -38,12 +38,12 @@ class HeadSkill(Node):
 
     if look_at_opponent:
       msg.indexes = [JointIndexes.HEADPITCH, JointIndexes.HEADYAW]
-      msg.positions = [radians(-5), min(max(self.opponent_heading, -0.5), 0.5)]
+      msg.positions = [radians(-10), min(max(self.opponent_heading, -0.5), 0.5)]
     else:
       time_since_start = (self.get_clock().now() - self.time_start).nanoseconds / 1000000000.0
       headyaw = MAX_YAW * sin(2.0 * pi * time_since_start / PERIOD)
       msg.indexes = [JointIndexes.HEADPITCH, JointIndexes.HEADYAW]
-      msg.positions = [radians(-5), headyaw]
+      msg.positions = [radians(-10), headyaw]
     self.publisher.publish(msg)
 
   def opponent_callback(self, opponent_point):
