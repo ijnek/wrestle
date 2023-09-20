@@ -15,6 +15,7 @@ from naosoccer_pos_action_interfaces.action import Action as PosAction
 from sensor_msgs.msg import Imu
 from tf_transformations import euler_from_quaternion
 from std_msgs.msg import Bool
+from nao_lola_sensor_msgs.msg import Buttons
 
 class MotionManager(Node):
 
@@ -23,19 +24,24 @@ class MotionManager(Node):
 
     action_cb_group = MutuallyExclusiveCallbackGroup()
     timer_cb_group = MutuallyExclusiveCallbackGroup()
+    subscription_cb_group = MutuallyExclusiveCallbackGroup()
 
     self.timer = self.create_timer(0.02, self.timer_callback, callback_group=timer_cb_group)
     self.walk_client = ActionClient(self, Walk, 'walk', callback_group=action_cb_group)
     self.getup_front_client = ActionClient(self, PosAction, 'getup_front', callback_group=action_cb_group)
     self.getup_back_client = ActionClient(self, PosAction, 'getup_back', callback_group=action_cb_group)
+    self.crouch_action_client = ActionClient(self, Crouch, 'motion/crouch', callback_group=action_cb_group)
 
     self.opponent_subscription = self.create_subscription(PointStamped, 'opponent_point',
-                                                          self.opponent_callback, 10)
-    self.imu_subscription = self.create_subscription(Imu, 'imu', self.imu_callback, 10)
+                                                          self.opponent_callback, 10, callback_group=subscription_cb_group)
+    self.imu_subscription = self.create_subscription(Imu, 'imu', self.imu_callback, 10, callback_group=subscription_cb_group)
+    self.buttons_subscription = self.create_subscription(Buttons, 'buttons', self.buttons_callback, 10, callback_group=subscription_cb_group)
 
     self.arm_enable = self.create_publisher(Bool, 'arm_provider/enable', 10)
 
-    self.crouch_action_client = ActionClient(self, Crouch, 'motion/crouch')
+    self.walk_client.wait_for_server(timeout_sec=5.0)
+    self.getup_front_client.wait_for_server(timeout_sec=5.0)
+    self.getup_back_client.wait_for_server(timeout_sec=5.0)
     self.crouch_action_client.wait_for_server(timeout_sec=5.0)
 
     self.time_crouch_completed = None
@@ -53,6 +59,14 @@ class MotionManager(Node):
     self.pitch = 0.0
 
     self._walk_goal_handle = None
+    self.time_bumper_left_last_pressed = self.get_clock().now()
+    self.time_bumper_right_last_pressed = self.get_clock().now()
+
+  def buttons_callback(self, buttons):
+    if buttons.l_foot_bumper_left or buttons.l_foot_bumper_right:
+      self.time_bumper_left_last_pressed = self.get_clock().now()
+    if buttons.r_foot_bumper_left or buttons.r_foot_bumper_right:
+      self.time_bumper_right_last_pressed = self.get_clock().now()
 
   def opponent_callback(self, opponent_point):
     # Decide on twist here
@@ -134,6 +148,10 @@ class MotionManager(Node):
       (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
     time_elapsed_since_crouch_finished = \
       (self.get_clock().now() - self.time_crouch_completed).nanoseconds / 1e9
+    time_elapsed_since_bumper_left_pressed = \
+      (self.get_clock().now() - self.time_bumper_left_last_pressed).nanoseconds / 1e9
+    time_elapsed_since_bumper_right_pressed = \
+      (self.get_clock().now() - self.time_bumper_right_last_pressed).nanoseconds / 1e9
 
     if time_elapsed_since_opponent_detected > 2.0:
       self.spin = True
@@ -144,12 +162,18 @@ class MotionManager(Node):
       # print("not spin!")
       self.spin = False
 
-    if time_elapsed_since_crouch_finished > 0.2:
-      if self.spin:
-        twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
-      else:
-        twist.linear.x = 0.4
-        twist.angular.z = 0.0
+    something_on_ground_in_front = time_elapsed_since_bumper_left_pressed < 1.0 or time_elapsed_since_bumper_right_pressed < 1.0
+
+    if time_elapsed_since_crouch_finished < 0.2:
+      pass
+    elif something_on_ground_in_front:
+      self.get_logger().info("something on ground in front")
+      pass
+    elif self.spin:
+      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
+    else:
+      twist.linear.x = 0.4
+      twist.angular.z = 0.0
 
     walk_goal = Walk.Goal()
     walk_goal.twist = twist
