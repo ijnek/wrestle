@@ -13,7 +13,7 @@ def white_mask(img):
 
 def red_mask_low(img):
   img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-  lower = np.array([0,152,12])
+  lower = np.array([0,70,135])
   upper = np.array([17,255,255])
   mask = cv2.inRange(img, lower, upper)
   return mask
@@ -32,29 +32,37 @@ def yellow_mask(img):
   mask = cv2.inRange(img, lower, upper)
   return mask
 
-def mask_inside_boundary(r_mask):
+def mask_inside_boundary(image, r_mask):
   # This returns an array of r and theta values
-  lines = cv2.HoughLinesP(r_mask, 1, math.pi/10, 2, None, 10, 50)
-  # img = overlay_lines(image, lines)
-  # cv2.imshow("lines", img)
+  lines = cv2.HoughLines(r_mask, 1, np.pi/180, 50)
+  # cv2.imshow("lines", overlay_lines(image, lines))
 
   mask_outside = np.zeros(r_mask.shape[:2], dtype=np.uint8)
-  if lines is None:
-    return mask_outside
 
-  for line in lines:
-    grad = math.atan2(line[0][3] - line[0][1], line[0][2] - line[0][0])
+  left_top = [0, 0]
+  right_top = [r_mask.shape[1], 0]
 
-    for i in range(line[0][0], line[0][2]):
-      y = int(line[0][1] + (i - line[0][0]) * math.tan(grad))
-      for j in range(0, y):
-        mask_outside[j][i] = 255
+  if lines is not None:
+    for line in lines:
+      for rho,theta in line:
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a*rho
+        y0 = b*rho
+        x1 = int(x0 + 1000*(-b))
+        y1 = int(y0 + 1000*(a))
+        x2 = int(x0 - 1000*(-b))
+        y2 = int(y0 - 1000*(a))
 
-  for i in range(r_mask.shape[0]):
-    for j in range(0, 10):
-      mask_outside[i][j] = 255
-    for j in range(r_mask.shape[1] - 10, r_mask.shape[1]):
-      mask_outside[i][j] = 255
+        poly = np.array([left_top, [x1, y1], [x2, y2], right_top])
+
+        # Draw polygon on mask
+        poly_mask = np.zeros(r_mask.shape[:2], dtype=np.uint8)
+        cv2.fillPoly(poly_mask, pts=[poly], color=(255, 255, 255))
+        # cv2.imshow("poly_mask", poly_mask)
+        mask_outside = cv2.bitwise_or(mask_outside, poly_mask)
+
+  # cv2.imshow("mask_outside", mask_outside)
 
   return cv2.bitwise_not(mask_outside)
 
@@ -62,9 +70,17 @@ def overlay_lines(img, lines):
   if lines is None:
     return img
   for line in lines:
-      pt1 = (line[0][0],line[0][1])
-      pt2 = (line[0][2],line[0][3])
-      cv2.line(img, pt1, pt2, (0,0,255), 3)
+    for rho,theta in line:
+      a = np.cos(theta)
+      b = np.sin(theta)
+      x0 = a*rho
+      y0 = b*rho
+      x1 = int(x0 + 1000*(-b))
+      y1 = int(y0 + 1000*(a))
+      x2 = int(x0 - 1000*(-b))
+      y2 = int(y0 - 1000*(a))
+
+      cv2.line(img,(x1,y1),(x2,y2),(0,0,255),2)
   return img
 
 def get_largest_countour(mask):
@@ -100,7 +116,7 @@ def locate_opponent(image):
     counter += 1
     w_mask = white_mask(image)
     r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
-    mask_bound = mask_inside_boundary(r_mask)
+    mask_bound = mask_inside_boundary(image, r_mask)
     final_mask = cv2.bitwise_and(w_mask, mask_bound)
     contour = get_largest_countour(final_mask)
     # overlay_countour(image, contour)
@@ -110,24 +126,23 @@ def locate_opponent(image):
     else:
       return None
 
+def locate_opponent_show(image):
+  cv2.imshow("image", image)
+  w_mask = white_mask(image)
+  cv2.imshow("white_mask", w_mask)
+  r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
+  cv2.imshow("red_mask", r_mask)
+  mask_bound = mask_inside_boundary(image, r_mask)
+  cv2.imshow("mask_bound", mask_bound)
+  final_mask = cv2.bitwise_and(w_mask, mask_bound)
+  cv2.imshow("final_mask", final_mask)
+
+  contour = get_largest_countour(final_mask)
+  overlay_countour(image, contour)
 
 if __name__ == '__main__':
-
   for i in range(0, 500):
     print(i)
     image = cv2.imread(f'images/{i}.png')
-    cv2.imshow("image", image)
-    w_mask = white_mask(image)
-    cv2.imshow("white_mask", w_mask)
-    r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
-    cv2.imshow("red_mask", r_mask)
-    mask_bound = mask_inside_boundary(r_mask)
-    cv2.imshow("mask_bound", mask_bound)
-    final_mask = cv2.bitwise_and(w_mask, mask_bound)
-    cv2.imshow("final_mask", final_mask)
-
-    contour = get_largest_countour(final_mask)
-    overlay_countour(image, contour)
-
     cv2.waitKey(20)
   cv2.destroyAllWindows()
