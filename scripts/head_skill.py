@@ -2,12 +2,8 @@
 
 import rclpy # Python library for ROS 2
 from rclpy.node import Node # Handles the creation of nodes
-from sensor_msgs.msg import Image # Image is the message type
-from cv_bridge import CvBridge # Package to convert between ROS and OpenCV Images
-from vision_msgs.msg import BoundingBox2D
-from wrestle.image_processing import ImageProcessing
 from nao_lola_command_msgs.msg import JointIndexes, JointPositions
-from math import sin, pi, radians, atan2
+from math import sin, pi, radians, atan2, sqrt
 from geometry_msgs.msg import PointStamped
 
 MAX_YAW = 0.0
@@ -26,6 +22,7 @@ class HeadSkill(Node):
                                                           self.opponent_callback, 10)
     self.time_since_obstacle_detected = None
     self.opponent_heading = 0
+    self.opponent_distance = 5.0
 
   def timer_callback(self):
     if self.time_since_obstacle_detected is not None:
@@ -38,7 +35,10 @@ class HeadSkill(Node):
 
     if look_at_opponent:
       msg.indexes = [JointIndexes.HEADPITCH, JointIndexes.HEADYAW]
-      msg.positions = [radians(-10), min(max(self.opponent_heading, -0.5), 0.5)]
+      head_pitch = radians(-10)
+      if (self.opponent_distance < 1.5):
+        head_pitch += radians(15) * (1.5 - self.opponent_distance)
+      msg.positions = [head_pitch, min(max(self.opponent_heading, -0.5), 0.5)]
     else:
       time_since_start = (self.get_clock().now() - self.time_start).nanoseconds / 1000000000.0
       headyaw = MAX_YAW * sin(2.0 * pi * time_since_start / PERIOD)
@@ -53,7 +53,7 @@ class HeadSkill(Node):
 
     self.time_since_obstacle_detected = self.get_clock().now()
     self.opponent_heading = atan2(opponent_point.point.y, opponent_point.point.x)
-
+    self.opponent_distance = sqrt(opponent_point.point.x ** 2 + opponent_point.point.y ** 2)
 
 def main(args=None):
 

@@ -23,10 +23,7 @@ class Crouch(Node):
     self.pub_sole_poses = self.create_publisher(SolePoses, 'motion/sole_poses', 10)
 
     self._action_server = ActionServer(
-      self,
-      CrouchAction,
-      'motion/crouch',
-      self.execute_callback)
+      self, CrouchAction, 'crouch', self.execute_callback)
 
   def execute_callback(self, goal_handle):
     # self.get_logger().info('Executing crouch...')

@@ -77,6 +77,18 @@ def generate_launch_description():
                                 ('action/_action/send_goal', 'getup_front/_action/send_goal')
                             ])
 
+    tip_over_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'tipOver.pos'])
+    tip_over_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                            name='tip_over', parameters=[{'file': tip_over_pos_path}],
+                            remappings=[
+                                ('action/_action/feedback', 'tip_over/_action/feedback'),
+                                ('action/_action/status', 'tip_over/_action/status'),
+                                ('action/_action/cancel_goal', 'tip_over/_action/cancel_goal'),
+                                ('action/_action/get_result', 'tip_over/_action/get_result'),
+                                ('action/_action/send_goal', 'tip_over/_action/send_goal')
+                            ])
+
     imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
                                     executable='imu_filter_madgwick_node',
                                     remappings=[('imu/data_raw', 'sensors/imu'),
@@ -149,15 +161,11 @@ def generate_launch_description():
                                             ('map_point', 'map_point_bot')])
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
-                                #   output='screen'
-                                remappings=[('imu', 'sensors/filtered_imu')],
-                                  )
+                                  output='screen')
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
 
-    crouch_node = Node(package='wrestle', executable='crouch.py',
-                    #    output='screen'
-                       )
+    crouch_node = Node(package='wrestle', executable='crouch.py')
 
     return LaunchDescription([
         rviz_launch_arg,
@@ -170,6 +178,7 @@ def generate_launch_description():
         nao_lola_conversion_node,
         getup_back_node,
         getup_front_node,
+        tip_over_node,
         imu_filter_madgwick_node,  # Slow
         nao_state_publisher_launch,  # Slow
         rviz_node,

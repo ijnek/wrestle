@@ -1,202 +1,211 @@
 #!/usr/bin/env python3
 
+from geometry_msgs.msg import PointStamped, Twist
+from math import atan2, radians, sqrt
+from naosoccer_pos_action_interfaces.action import Action as PosAction
+from nao_lola_sensor_msgs.msg import Accelerometer, Buttons
 import rclpy
+from rclpy.action import ActionClient
+from rclpy.clock import ClockType
 from rclpy.node import Node
 from rclpy.time import Time
-from rclpy.action import ActionClient
-from walk_interfaces.action import Walk
-from rclpy.executors import MultiThreadedExecutor
-from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
-from geometry_msgs.msg import Twist, PointStamped
-from math import atan2
-from walk_interfaces.action import Crouch
-from math import radians, asin
-from naosoccer_pos_action_interfaces.action import Action as PosAction
-from sensor_msgs.msg import Imu
-from tf_transformations import euler_from_quaternion
+from walk_interfaces.action import Crouch, Walk
 from std_msgs.msg import Bool
-from nao_lola_sensor_msgs.msg import Buttons
+
+ACCELEROMETER_FALLEN = 7.0  # m/s/s
+
 
 class MotionManager(Node):
-
   def __init__(self):
     super().__init__('motion_manager')
 
-    action_cb_group = MutuallyExclusiveCallbackGroup()
-    timer_cb_group = MutuallyExclusiveCallbackGroup()
-    subscription_cb_group = MutuallyExclusiveCallbackGroup()
+    # Timer
+    self.get_logger().info("Initialize timer")
+    self.timer = self.create_timer(0.02, self.timer_callback)
 
-    self.timer = self.create_timer(0.02, self.timer_callback, callback_group=timer_cb_group)
-    self.walk_client = ActionClient(self, Walk, 'walk', callback_group=action_cb_group)
-    self.getup_front_client = ActionClient(self, PosAction, 'getup_front', callback_group=action_cb_group)
-    self.getup_back_client = ActionClient(self, PosAction, 'getup_back', callback_group=action_cb_group)
-    self.crouch_action_client = ActionClient(self, Crouch, 'motion/crouch', callback_group=action_cb_group)
+    # Action clients
+    self.get_logger().info("Initialize action clients")
+    self.walk_client = ActionClient(self, Walk, 'walk')
+    self.getup_front_client = ActionClient(self, PosAction, 'getup_front')
+    self.getup_back_client = ActionClient(self, PosAction, 'getup_back')
+    self.tip_over_client = ActionClient(self, PosAction, 'tip_over')
+    self.crouch_client = ActionClient(self, Crouch, 'crouch')
 
-    self.opponent_subscription = self.create_subscription(PointStamped, 'opponent_point',
-                                                          self.opponent_callback, 10, callback_group=subscription_cb_group)
-    self.imu_subscription = self.create_subscription(Imu, 'imu', self.imu_callback, 10, callback_group=subscription_cb_group)
-    self.buttons_subscription = self.create_subscription(Buttons, 'buttons', self.buttons_callback, 10, callback_group=subscription_cb_group)
+    # Wait for action servers to come up
+    self.get_logger().info("Wait for action servers")
+    if not self.walk_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to walk action server")
+    if not self.getup_front_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to getup front action server")
+    if not self.getup_back_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to getup back action server")
+    if not self.tip_over_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to tip over action server")
+    if not self.crouch_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to crouch action server")
 
+    # Subscriptions
+    self.get_logger().info("Initialize subscriptions")
+    self.opponent_subscription = self.create_subscription(
+      PointStamped, 'opponent_point', self.opponent_callback, 10)
+    self.accelerometer_subscription = self.create_subscription(
+      Accelerometer, 'sensors/accelerometer', self.accelerometer_callback, 10)
+    self.buttons_subscription = self.create_subscription(
+      Buttons, 'sensors/buttons', self.buttons_callback, 10)
+
+    # Publishers
+    self.twist_publisher = self.create_publisher(Twist, 'target', 10)
     self.arm_enable = self.create_publisher(Bool, 'arm_provider/enable', 10)
 
-    self.walk_client.wait_for_server(timeout_sec=5.0)
-    self.getup_front_client.wait_for_server(timeout_sec=5.0)
-    self.getup_back_client.wait_for_server(timeout_sec=5.0)
-    self.crouch_action_client.wait_for_server(timeout_sec=5.0)
-
-    self.time_crouch_completed = None
-
-    self.last_twist = None
-
-    self.last_time_opponent_detected = self.get_clock().now()
-    self.opponent_heading_average = 0.0  # rad
-    self.opponent_distance = 10000.0  # m
-
-    self.initial = True
+    # Some states
+    self.get_logger().info("Initialize some states")
+    self.opponent_heading_average = 0  # radians
+    self.opponent_distance_average = 3.0  # metres
+    self.fall_direction = None  # None, 'front', 'back', 'left', 'right'
+    self.time_crouch_requested = Time(clock_type=ClockType.ROS_TIME)
+    self.last_time_opponent_detected = Time(clock_type=ClockType.ROS_TIME)
+    self.last_time_bumper_left_pressed = self.get_clock().now()
+    self.last_time_bumper_right_pressed = self.get_clock().now()
+    self.acc_x_avg = 0  # radians
+    self.acc_y_avg = 0  # radians
+    self.doing_action = False
     self.crouched = False
-    self.spin = False
-    self.doing_getup = False
-    self.pitch = 0.0
 
-    self._walk_goal_handle = None
-    self.time_bumper_left_last_pressed = self.get_clock().now()
-    self.time_bumper_right_last_pressed = self.get_clock().now()
+    self.walk_goal_handle = None
+    self.walking = False
 
-  def buttons_callback(self, buttons):
-    if buttons.l_foot_bumper_left or buttons.l_foot_bumper_right:
-      self.time_bumper_left_last_pressed = self.get_clock().now()
-    if buttons.r_foot_bumper_left or buttons.r_foot_bumper_right:
-      self.time_bumper_right_last_pressed = self.get_clock().now()
-
-  def opponent_callback(self, opponent_point):
-    # Decide on twist here
-
-    heading = atan2(opponent_point.point.y, opponent_point.point.x)
-    # self.get_logger().info('Heading: %f' % heading)
-    self.opponent_heading_average = self.opponent_heading_average * 0.7 + heading * 0.3
-    # print("self.opponent_heading_average: ", self.opponent_heading_average)
-    self.last_time_opponent_detected = Time.from_msg(opponent_point.header.stamp)
-
-  def crouch_goal_response_callback(self, future):
-    goal_handle = future.result()
-    if not goal_handle.accepted:
-      return
-    self._crouch_get_result_future = goal_handle.get_result_async()
-    self._crouch_get_result_future.add_done_callback(self.crouch_result_callback)
-
-  def crouch_result_callback(self, _):
-    self.crouched = True
-    self.time_crouch_completed = self.get_clock().now()
-
-  def getup_goal_response_callback(self, future):
-    goal_handle = future.result()
-    if not goal_handle.accepted:
-      return
-    self._getup_get_result_future = goal_handle.get_result_async()
-    self._getup_get_result_future.add_done_callback(self.getup_result_callback)
-
-  def getup_result_callback(self, _):
-    self.doing_getup = False
-
-  def walk_goal_response_callback(self, future):
-    self._walk_goal_handle = future.result()
-    if not self._walk_goal_handle.accepted:
-      return
-
-  def cancel_walk(self):
-    # self.get_logger().info('Canceling goal')
-    if self._walk_goal_handle is not None:
-      self._walk_goal_handle.cancel_goal_async()
+    self.should_spin = False
 
   def timer_callback(self):
-    if self.initial:
-      self.arm_enable.publish(Bool(data=True))
-      self._send_goal_future = self.crouch_action_client.send_goal_async(Crouch.Goal())
-      self._send_goal_future.add_done_callback(self.crouch_goal_response_callback)
-      self.initial = False
+
+    if self.doing_action:
       return
 
     if not self.crouched:
-      # In the process of crouching, don't do anything here
+      self.action_future = self.crouch_client.send_goal_async(Crouch.Goal())
+      self.action_future.add_done_callback(self.action_goal_response_callback)
+      self.doing_action = True
+      self.crouched = True
+      self.time_crouch_requested = self.get_clock().now()
       return
 
-    if self.doing_getup:
-      # In the process of getting up, don't do anything here
-      return
-
-    if self.pitch > 1.0:
-      # self.get_logger().info("do getup front")
-      self.doing_getup = True
+    if self.fall_direction is not None:
       self.cancel_walk()
+      if self.fall_direction is 'front':
+        self.get_logger().info("Getup Front")
+        self.action_future = self.getup_front_client.send_goal_async(PosAction.Goal())
+      if self.fall_direction is 'back':
+        self.get_logger().info("Getup Back")
+        self.action_future = self.getup_back_client.send_goal_async(PosAction.Goal())
+      if self.fall_direction in ('left', 'right'):
+        self.get_logger().info("Tip Over")
+        self.action_future = self.tip_over_client.send_goal_async(PosAction.Goal())
+      self.action_future.add_done_callback(self.action_goal_response_callback)
+      self.doing_action = True
       self.arm_enable.publish(Bool(data=False))
-      self.getup_future = self.getup_front_client.send_goal_async(PosAction.Goal())
-      self.getup_future.add_done_callback(self.getup_goal_response_callback)
       return
 
-    if self.pitch < -1.0:
-      # self.get_logger().info("do getup back")
-      self.doing_getup = True
-      self.cancel_walk()
-      self.arm_enable.publish(Bool(data=False))
-      self.getup_future = self.getup_back_client.send_goal_async(PosAction.Goal())
-      self.getup_future.add_done_callback(self.getup_goal_response_callback)
-      return
+    if not self.walking:
+      self.get_logger().info("Walk")
+      self.walk_future = self.walk_client.send_goal_async(Walk.Goal())
+      self.walk_future.add_done_callback(self.walk_goal_response_callback)
+      self.walking = True
+      self.arm_enable.publish(Bool(data=True))
+    self.twist_publisher.publish(self.calculate_twist())
 
-    self.arm_enable.publish(Bool(data=True))
-    twist = Twist()
+  def opponent_callback(self, opponent_point):
+    heading = atan2(opponent_point.point.y, opponent_point.point.x)
+    distance = sqrt(opponent_point.point.x ** 2 + opponent_point.point.y ** 2)
+    self.opponent_heading_average = self.opponent_heading_average * 0.5 + heading * 0.5
+    self.opponent_distance_average = self.opponent_distance_average * 0.5 + distance * 0.5
+    # self.get_logger().info(f"Opponent distance average: {self.opponent_distance_average}")
+    self.last_time_opponent_detected = Time.from_msg(opponent_point.header.stamp)
+
+  def accelerometer_callback(self, accelerometer):
+    self.acc_x_avg = self.acc_x_avg * 0.9 + accelerometer.x * 0.1
+    self.acc_y_avg = self.acc_y_avg * 0.9 + accelerometer.y * 0.1
+
+    if self.acc_x_avg > ACCELEROMETER_FALLEN:
+      self.fall_direction = 'back'
+    elif self.acc_x_avg < -ACCELEROMETER_FALLEN:
+      self.fall_direction = 'front'
+    elif self.acc_y_avg > ACCELEROMETER_FALLEN:
+      self.fall_direction = 'left'
+    elif self.acc_y_avg < -ACCELEROMETER_FALLEN:
+      self.fall_direction = 'right'
+    else:
+      self.fall_direction = None
+
+  def buttons_callback(self, buttons):
+    if buttons.l_foot_bumper_left or buttons.l_foot_bumper_right:
+      self.last_time_bumper_left_pressed = self.get_clock().now()
+    if buttons.r_foot_bumper_left or buttons.r_foot_bumper_right:
+      self.last_time_bumper_right_pressed = self.get_clock().now()
+
+  def action_goal_response_callback(self, future):
+    goal_handle = future.result()
+    if not goal_handle.accepted:
+      return
+    self._action_get_result_future = goal_handle.get_result_async()
+    self._action_get_result_future.add_done_callback(self.action_result_callback)
+
+  def action_result_callback(self, _):
+    self.doing_action = False
+
+  def cancel_walk(self):
+    if self.walk_goal_handle is not None:
+      self.walk_goal_handle.cancel_goal_async()
+      self.walking = False
+
+  def calculate_twist(self):
     time_elapsed_since_opponent_detected = \
       (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
     time_elapsed_since_crouch_finished = \
-      (self.get_clock().now() - self.time_crouch_completed).nanoseconds / 1e9
+      (self.get_clock().now() - self.time_crouch_requested).nanoseconds / 1e9
     time_elapsed_since_bumper_left_pressed = \
-      (self.get_clock().now() - self.time_bumper_left_last_pressed).nanoseconds / 1e9
+      (self.get_clock().now() - self.last_time_bumper_left_pressed).nanoseconds / 1e9
     time_elapsed_since_bumper_right_pressed = \
-      (self.get_clock().now() - self.time_bumper_right_last_pressed).nanoseconds / 1e9
+      (self.get_clock().now() - self.last_time_bumper_right_pressed).nanoseconds / 1e9
 
-    if time_elapsed_since_opponent_detected > 2.0:
-      self.spin = True
-    elif not self.spin and abs(self.opponent_heading_average) > radians(20):
-      # print("spin!")
-      self.spin = True
-    elif self.spin and abs(self.opponent_heading_average) < radians(10):
-      # print("not spin!")
-      self.spin = False
+    # Update self.should_spin hysteresis
+    if self.should_spin and abs(self.opponent_heading_average) < radians(10):
+      self.should_spin = False
+    elif not self.should_spin and abs(self.opponent_heading_average) > radians(20):
+      self.should_spin = True
 
-    something_on_ground_in_front = time_elapsed_since_bumper_left_pressed < 1.0 or time_elapsed_since_bumper_right_pressed < 1.0
-
-    if time_elapsed_since_crouch_finished < 0.2:
-      pass
-    elif something_on_ground_in_front:
-      self.get_logger().info("something on ground in front")
-      pass
-    elif self.spin:
-      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
-    else:
+    twist = Twist()
+    if time_elapsed_since_crouch_finished < 6.0:
+      # Walk forwards
+      # self.get_logger().info("Walk forwards")
       twist.linear.x = 0.4
-      twist.angular.z = 0.0
+    elif time_elapsed_since_opponent_detected > 2.0:
+      # Slowly turn in direction we think opponent is in
+      # self.get_logger().info("Slowly turn in direction we think opponent is in")
+      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
+    elif self.should_spin:
+      # Quickly turn towards opponent
+      # self.get_logger().info("Quickly turn towards opponent")
+      twist.angular.z = 2.0 if self.opponent_heading_average > 0 else -2.0
+    elif time_elapsed_since_bumper_left_pressed < 1.0 or time_elapsed_since_bumper_right_pressed < 1.0:
+      # Don't walk into obstacle detected by foot bumper
+      # self.get_logger().info("Don't walk into obstacle detected by foot bumper")
+      pass
+    elif self.opponent_distance_average > 0.4:
+      # Ram into opponent
+      # self.get_logger().info("Ram into opponent")
+      twist.linear.x = 0.4
+    # else:
+      # self.get_logger().info("Close to opponent, not walking in")
 
-    walk_goal = Walk.Goal()
-    walk_goal.twist = twist
-    self.walk_future = self.walk_client.send_goal_async(walk_goal)
-    self.walk_future.add_done_callback(self.walk_goal_response_callback)
-    self.last_twist = twist
+    return twist
 
-  def imu_callback(self, imu):
-    # Calculate pitch here
-    qx = imu.orientation.x
-    qy = imu.orientation.y
-    qz = imu.orientation.z
-    qw = imu.orientation.w
-    [roll, pitch, yaw] = euler_from_quaternion([qx, qy, qz, qw])
-    self.pitch = pitch
-    # self.get_logger().info(f"pitch: {pitch}")
+  def walk_goal_response_callback(self, future):
+    self.walk_goal_handle = future.result()
 
 def main(args=None):
   rclpy.init(args=args)
   motion_manager = MotionManager()
-  executor = MultiThreadedExecutor()
-  executor.add_node(motion_manager)
-  executor.spin()
+  rclpy.spin(motion_manager)
   motion_manager.destroy_node()
   rclpy.shutdown()
 
