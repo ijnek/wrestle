@@ -11,6 +11,7 @@ from rclpy.node import Node
 from rclpy.time import Time
 from walk_interfaces.action import Walk
 from std_msgs.msg import Bool
+from rclpy.qos import qos_profile_sensor_data
 
 ACCELEROMETER_FALLEN = 7.0  # m/s/s
 
@@ -50,15 +51,15 @@ class MotionManager(Node):
     # Subscriptions
     self.get_logger().info("Initialize subscriptions")
     self.opponent_subscription = self.create_subscription(
-      PointStamped, 'opponent_point', self.opponent_callback, 10)
+      PointStamped, 'opponent_point', self.opponent_callback, qos_profile_sensor_data)
     self.accelerometer_subscription = self.create_subscription(
-      Accelerometer, 'sensors/accelerometer', self.accelerometer_callback, 10)
+      Accelerometer, 'sensors/accelerometer', self.accelerometer_callback, qos_profile_sensor_data)
     self.buttons_subscription = self.create_subscription(
-      Buttons, 'sensors/buttons', self.buttons_callback, 10)
+      Buttons, 'sensors/buttons', self.buttons_callback, qos_profile_sensor_data)
 
     # Publishers
-    self.twist_publisher = self.create_publisher(Twist, 'target', 10)
-    self.arm_enable = self.create_publisher(Bool, 'arm_provider/enable', 10)
+    self.twist_publisher = self.create_publisher(Twist, 'target', 1)
+    self.arm_enable = self.create_publisher(Bool, 'arm_provider/enable', 1)
 
     # Some states
     self.get_logger().info("Initialize some states")
@@ -194,16 +195,16 @@ class MotionManager(Node):
       (self.get_clock().now() - self.last_time_bumper_right_pressed).nanoseconds / 1e9
 
     # Update self.should_spin hysteresis
-    if self.should_spin and abs(self.opponent_heading_average) < radians(10):
+    if self.should_spin and abs(self.opponent_heading_average) < radians(5):
       self.should_spin = False
-    elif not self.should_spin and abs(self.opponent_heading_average) > radians(20):
+    elif not self.should_spin and abs(self.opponent_heading_average) > radians(10):
       self.should_spin = True
 
     twist = Twist()
     if time_elapsed_since_crouch_finished < 6.0:
       # Walk forwards
       # self.get_logger().info("Walk forwards")
-      twist.linear.x = 0.4
+      twist.linear.x = 0.3
     elif time_elapsed_since_opponent_detected > 2.0:
       # Slowly turn in direction we think opponent is in
       # self.get_logger().info("Slowly turn in direction we think opponent is in")
@@ -211,7 +212,7 @@ class MotionManager(Node):
     elif self.should_spin:
       # Quickly turn towards opponent
       # self.get_logger().info("Quickly turn towards opponent")
-      twist.angular.z = 2.0 if self.opponent_heading_average > 0 else -2.0
+      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
     elif time_elapsed_since_bumper_left_pressed < 1.0 or time_elapsed_since_bumper_right_pressed < 1.0:
       # Don't walk into obstacle detected by foot bumper
       # self.get_logger().info("Don't walk into obstacle detected by foot bumper")
@@ -219,7 +220,8 @@ class MotionManager(Node):
     elif self.opponent_distance_average > 0.4:
       # Ram into opponent
       # self.get_logger().info("Ram into opponent")
-      twist.linear.x = 0.4
+      twist.linear.x = 0.2
+      twist.angular.z = self.opponent_heading_average
     # else:
       # self.get_logger().info("Close to opponent, not walking in")
 

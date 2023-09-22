@@ -6,15 +6,17 @@ from biped_interfaces.msg import SolePoses
 from nao_lola_command_msgs.msg import JointIndexes, JointPositions
 from math import radians
 from std_msgs.msg import Bool
+from rclpy.qos import qos_profile_sensor_data
 
 class ArmProvider(Node):
 
   def __init__(self):
 
     super().__init__('arm_provider')
-    self.subscription = self.create_subscription(SolePoses, 'motion/sole_poses', self.sp_callback, 10)
-    self.publisher = self.create_publisher(JointPositions, 'effectors/joint_positions', 10)
-    self.enable = self.create_subscription(Bool, 'arm_provider/enable', self.enable_callback, 10)
+    self.subscription = self.create_subscription(SolePoses, 'motion/sole_poses', self.sp_callback,
+                                                 qos_profile_sensor_data)
+    self.publisher = self.create_publisher(JointPositions, 'effectors/joint_positions', 1)
+    self.enable = self.create_subscription(Bool, 'arm_provider/enable', self.enable_callback, 1)
     self.sole_poses = None
     self.time_start = self.get_clock().now()
     self.enabled = False

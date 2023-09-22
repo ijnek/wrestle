@@ -18,6 +18,7 @@ from ipm_library.utils import create_horizontal_plane
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from geometry_msgs.msg import PointStamped
+from rclpy.qos import qos_profile_sensor_data
 
 ROBOT_HEIGHT = 0.58
 
@@ -35,19 +36,19 @@ class RobotDetection(Node):
     # Create the subscriber. This subscriber will receive an Image
     # from the video_frames topic. The queue size is 10 messages.
     self.subscription = self.create_subscription(
-      Image, 'image', self.listener_callback, 10)
+      Image, 'image', self.listener_callback, qos_profile_sensor_data)
     self.subscription # prevent unused variable warning
 
     # Used to convert between ROS and OpenCV images
     self.br = CvBridge()
 
-    self.marker_publisher = self.create_publisher(Marker, 'opponent', 10)
+    self.marker_publisher = self.create_publisher(Marker, 'opponent', 1)
 
     self.ipm_client = self.create_client(MapPoint, 'map_point')
     while not self.ipm_client.wait_for_service(timeout_sec=1.0):
       self.get_logger().info('service not available, waiting again...')
 
-    self.point_publisher = self.create_publisher(PointStamped, 'opponent_point', 10)
+    self.point_publisher = self.create_publisher(PointStamped, 'opponent_point', 1)
 
   def listener_callback(self, data):
     """

@@ -5,6 +5,7 @@ from rclpy.node import Node # Handles the creation of nodes
 from nao_lola_command_msgs.msg import JointIndexes, JointPositions
 from math import sin, pi, radians, atan2, sqrt
 from geometry_msgs.msg import PointStamped
+from rclpy.qos import qos_profile_sensor_data
 
 MAX_YAW = 0.0
 PERIOD = 3.0
@@ -18,8 +19,8 @@ class HeadSkill(Node):
     self.publisher = self.create_publisher(JointPositions, 'effectors/joint_positions', 10)
     self.timer = self.create_timer(0.02, self.timer_callback)
     self.time_start = self.get_clock().now()
-    self.opponent_subscription = self.create_subscription(PointStamped, 'opponent_point',
-                                                          self.opponent_callback, 10)
+    self.opponent_subscription = self.create_subscription(
+      PointStamped, 'opponent_point', self.opponent_callback, qos_profile_sensor_data)
     self.time_since_obstacle_detected = None
     self.opponent_heading = 0
     self.opponent_distance = 5.0
