@@ -32,17 +32,10 @@ class RobotDetection(Node):
     # Initiate the Node class's constructor and give it a name
     super().__init__('robot_detection')
 
-    client_cb_group = MutuallyExclusiveCallbackGroup()
-    sub_cb_group = MutuallyExclusiveCallbackGroup()
-
     # Create the subscriber. This subscriber will receive an Image
     # from the video_frames topic. The queue size is 10 messages.
     self.subscription = self.create_subscription(
-      Image,
-      'image',
-      self.listener_callback,
-      10,
-      callback_group=sub_cb_group)
+      Image, 'image', self.listener_callback, 10)
     self.subscription # prevent unused variable warning
 
     # Used to convert between ROS and OpenCV images
@@ -50,7 +43,7 @@ class RobotDetection(Node):
 
     self.marker_publisher = self.create_publisher(Marker, 'opponent', 10)
 
-    self.ipm_client = self.create_client(MapPoint, 'map_point', callback_group=client_cb_group)
+    self.ipm_client = self.create_client(MapPoint, 'map_point')
     while not self.ipm_client.wait_for_service(timeout_sec=1.0):
       self.get_logger().info('service not available, waiting again...')
 
@@ -80,8 +73,11 @@ class RobotDetection(Node):
     req.plane_frame_id = 'base_footprint'
     req.output_frame_id = 'base_footprint'
     # print(req)
-    resp = self.ipm_client.call(req)
+    future = self.ipm_client.call_async(req)
+    future.add_done_callback(self.ipm_done_callback)
 
+  def ipm_done_callback(self, future):
+    resp = future.result()
     max_detection_dist = 4.0
     if resp.point.point.x**2 + resp.point.point.y**2 > max_detection_dist**2:
       # Ignore the detection, too far away and probably false positive
@@ -116,9 +112,7 @@ def main(args=None):
   robot_detection = RobotDetection()
 
   # Spin the node so the callback function is called.
-  executor = MultiThreadedExecutor()
-  executor.add_node(robot_detection)
-  executor.spin()
+  rclpy.spin(robot_detection)
 
   # Destroy the node explicitly
   # (optional - otherwise it will be done automatically

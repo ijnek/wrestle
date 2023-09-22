@@ -53,6 +53,18 @@ def generate_launch_description():
 
     nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion')
 
+    crouch_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'crouch.pos'])
+    crouch_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                           name='crouch', parameters=[{'file': crouch_pos_path}],
+                            remappings=[
+                                ('action/_action/feedback', 'crouch/_action/feedback'),
+                                ('action/_action/status', 'crouch/_action/status'),
+                                ('action/_action/cancel_goal', 'crouch/_action/cancel_goal'),
+                                ('action/_action/get_result', 'crouch/_action/get_result'),
+                                ('action/_action/send_goal', 'crouch/_action/send_goal')
+                            ])
+
     getup_back_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
     getup_back_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
@@ -89,28 +101,16 @@ def generate_launch_description():
                                 ('action/_action/send_goal', 'tip_over/_action/send_goal')
                             ])
 
-    hook_left_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'hookLeft.pos'])
-    hook_left_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                            name='hook_left', parameters=[{'file': hook_left_pos_path}],
+    punch_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'doublePunch.pos'])
+    punch_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                            name='punch', parameters=[{'file': punch_pos_path}],
                             remappings=[
-                                ('action/_action/feedback', 'hook_left/_action/feedback'),
-                                ('action/_action/status', 'hook_left/_action/status'),
-                                ('action/_action/cancel_goal', 'hook_left/_action/cancel_goal'),
-                                ('action/_action/get_result', 'hook_left/_action/get_result'),
-                                ('action/_action/send_goal', 'hook_left/_action/send_goal')
-                            ])
-
-    hook_right_pos_path = PathJoinSubstitution(
-        [FindPackageShare('wrestle'), 'pos', 'hookRight.pos'])
-    hook_right_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
-                            name='hook_right', parameters=[{'file': hook_right_pos_path}],
-                            remappings=[
-                                ('action/_action/feedback', 'hook_right/_action/feedback'),
-                                ('action/_action/status', 'hook_right/_action/status'),
-                                ('action/_action/cancel_goal', 'hook_right/_action/cancel_goal'),
-                                ('action/_action/get_result', 'hook_right/_action/get_result'),
-                                ('action/_action/send_goal', 'hook_right/_action/send_goal')
+                                ('action/_action/feedback', 'punch/_action/feedback'),
+                                ('action/_action/status', 'punch/_action/status'),
+                                ('action/_action/cancel_goal', 'punch/_action/cancel_goal'),
+                                ('action/_action/get_result', 'punch/_action/get_result'),
+                                ('action/_action/send_goal', 'punch/_action/send_goal')
                             ])
 
     imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
@@ -182,14 +182,13 @@ def generate_launch_description():
 
     ipm_service_node_bot = Node(package='ipm_service', executable='ipm_service', name='ipm_service_bot',
                                 remappings=[('camera_info', 'camera_info_bot'),
-                                            ('map_point', 'map_point_bot')])
+                                            ('map_point', 'map_point_bot')],
+                                respawn=True)
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
                                   output='screen')
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
-
-    crouch_node = Node(package='wrestle', executable='crouch.py')
 
     return LaunchDescription([
         rviz_launch_arg,
@@ -200,11 +199,11 @@ def generate_launch_description():
         nao_phase_provider_node,
         walk_node,
         nao_lola_conversion_node,
+        crouch_node,
         getup_back_node,
         getup_front_node,
         tip_over_node,
-        hook_left_node,
-        hook_right_node,
+        punch_node,
         imu_filter_madgwick_node,  # Slow
         nao_state_publisher_launch,  # Slow
         rviz_node,
@@ -220,5 +219,4 @@ def generate_launch_description():
         # ipm_service_node_top,
         ipm_service_node_bot,
         arm_provider_node,
-        crouch_node,
     ])

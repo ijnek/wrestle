@@ -18,7 +18,6 @@ install(PROGRAMS
   scripts/robot_detection.py
   scripts/motion_manager.py
   scripts/arm_provider.py
-  scripts/crouch.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

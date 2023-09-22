@@ -9,7 +9,7 @@ from rclpy.action import ActionClient
 from rclpy.clock import ClockType
 from rclpy.node import Node
 from rclpy.time import Time
-from walk_interfaces.action import Crouch, Walk
+from walk_interfaces.action import Walk
 from std_msgs.msg import Bool
 
 ACCELEROMETER_FALLEN = 7.0  # m/s/s
@@ -29,9 +29,8 @@ class MotionManager(Node):
     self.getup_front_client = ActionClient(self, PosAction, 'getup_front')
     self.getup_back_client = ActionClient(self, PosAction, 'getup_back')
     self.tip_over_client = ActionClient(self, PosAction, 'tip_over')
-    self.crouch_client = ActionClient(self, Crouch, 'crouch')
-    self.hook_left_client = ActionClient(self, PosAction, 'hook_left')
-    self.hook_right_client = ActionClient(self, PosAction, 'hook_right')
+    self.crouch_client = ActionClient(self, PosAction, 'crouch')
+    self.punch_client = ActionClient(self, PosAction, 'punch')
 
     # Wait for action servers to come up
     self.get_logger().info("Wait for action servers")
@@ -45,10 +44,8 @@ class MotionManager(Node):
       self.get_logger().error("Failed to connect to tip over action server")
     if not self.crouch_client.wait_for_server(timeout_sec=5.0):
       self.get_logger().error("Failed to connect to crouch action server")
-    if not self.hook_left_client.wait_for_server(timeout_sec=5.0):
-      self.get_logger().error("Failed to connect to hook left action server")
-    if not self.hook_right_client.wait_for_server(timeout_sec=5.0):
-      self.get_logger().error("Failed to connect to hook right action server")
+    if not self.punch_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to punch left action server")
 
     # Subscriptions
     self.get_logger().info("Initialize subscriptions")
@@ -76,8 +73,7 @@ class MotionManager(Node):
     self.acc_y_avg = 0  # radians
     self.doing_action = False
     self.crouched = False
-    self.last_hook_direction = 'left'
-    self.should_hook_counter = 0
+    self.should_punch_counter = 0
 
     self.walk_goal_handle = None
     self.walking = False
@@ -90,7 +86,7 @@ class MotionManager(Node):
       return
 
     if not self.crouched:
-      self.action_future = self.crouch_client.send_goal_async(Crouch.Goal())
+      self.action_future = self.crouch_client.send_goal_async(PosAction.Goal())
       self.action_future.add_done_callback(self.action_goal_response_callback)
       self.doing_action = True
       self.crouched = True
@@ -113,15 +109,8 @@ class MotionManager(Node):
       self.doing_action = True
       return
 
-    if self.should_hook():
-      if self.last_hook_direction == 'right':
-        self.get_logger().info("Hook Left")
-        self.action_future = self.hook_left_client.send_goal_async(PosAction.Goal())
-        self.last_hook_direction = 'left'
-      else:  # 'right'
-        self.get_logger().info("Hook Right")
-        self.action_future = self.hook_right_client.send_goal_async(PosAction.Goal())
-        self.last_hook_direction = 'right'
+    if self.should_punch():
+      self.action_future = self.punch_client.send_goal_async(PosAction.Goal())
       self.action_future.add_done_callback(self.action_goal_response_callback)
       self.cancel_walk()
       self.arm_enable.publish(Bool(data=False))
@@ -180,17 +169,17 @@ class MotionManager(Node):
       self.walk_goal_handle.cancel_goal_async()
       self.walking = False
 
-  def should_hook(self):
+  def should_punch(self):
     time_elapsed_since_opponent_detected = \
       (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
 
     if time_elapsed_since_opponent_detected < 0.5 and self.opponent_distance_average < 0.4:
-      self.should_hook_counter += 1
+      self.should_punch_counter += 1
     else:
-      self.should_hook_counter -= 1
-    self.should_hook_counter = min(max(self.should_hook_counter, 0), 5)
+      self.should_punch_counter -= 1
+    self.should_punch_counter = min(max(self.should_punch_counter, 0), 5)
 
-    if self.should_hook_counter == 5:
+    if self.should_punch_counter == 5:
       return True
     return False
 
