@@ -24,7 +24,7 @@ cv2.createTrackbar('VMax','image',0,255,nothing)
 
 # Red high
 # cv2.setTrackbarPos('HMin', 'image', 140)
-# cv2.setTrackbarPos('SMin', 'image', 60)
+# cv2.setTrackbarPos('SMin', 'image', 23)
 # cv2.setTrackbarPos('VMin', 'image', 50)
 # cv2.setTrackbarPos('HMax', 'image', 180)
 # cv2.setTrackbarPos('SMax', 'image', 255)

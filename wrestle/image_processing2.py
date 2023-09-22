@@ -13,14 +13,14 @@ def white_mask(img):
 
 def red_mask_low(img):
   img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-  lower = np.array([0,152,12])
+  lower = np.array([0,70,135])
   upper = np.array([17,255,255])
   mask = cv2.inRange(img, lower, upper)
   return mask
 
 def red_mask_high(img):
   img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-  lower = np.array([140,60,50])
+  lower = np.array([140,23,50])
   upper = np.array([180,255,255])
   mask = cv2.inRange(img, lower, upper)
   return mask
@@ -32,9 +32,9 @@ def yellow_mask(img):
   mask = cv2.inRange(img, lower, upper)
   return mask
 
-def mask_inside_boundary(r_mask):
+def mask_inside_boundary(r_mask, image):
   # This returns an array of r and theta values
-  lines = cv2.HoughLinesP(r_mask, 1, math.pi/10, 2, None, 10, 50)
+  lines = cv2.HoughLinesP(r_mask, 1, math.pi/180, 10, None, 2, 150)
   # img = overlay_lines(image, lines)
   # cv2.imshow("lines", img)
 
@@ -95,20 +95,18 @@ def get_bbox_2d(contour):
 
 counter = 0
 def locate_opponent(image):
-    global counter
-    cv2.imwrite(f"images/{counter}.png", image)
-    counter += 1
+    # global counter
+    # cv2.imwrite(f"images/{counter}.png", image)
+    # counter += 1
     w_mask = white_mask(image)
     r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
-    mask_bound = mask_inside_boundary(r_mask)
+    mask_bound = mask_inside_boundary(r_mask, image)
     final_mask = cv2.bitwise_and(w_mask, mask_bound)
     contour = get_largest_countour(final_mask)
     # overlay_countour(image, contour)
-    bbox2d = get_bbox_2d(contour)
-    if bbox2d.size_y > 10:
-      return bbox2d
-    else:
-      return None
+    if contour is not None:
+      return get_bbox_2d(contour)
+    return None
 
 def locate_opponent_show(image):
   cv2.imshow("image", image)
@@ -116,7 +114,7 @@ def locate_opponent_show(image):
   cv2.imshow("white_mask", w_mask)
   r_mask = cv2.bitwise_or(cv2.bitwise_or(red_mask_low(image), red_mask_high(image)), yellow_mask(image))
   cv2.imshow("red_mask", r_mask)
-  mask_bound = mask_inside_boundary(r_mask)
+  mask_bound = mask_inside_boundary(r_mask, image)
   cv2.imshow("mask_bound", mask_bound)
   final_mask = cv2.bitwise_and(w_mask, mask_bound)
   cv2.imshow("final_mask", final_mask)

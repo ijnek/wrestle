@@ -174,7 +174,8 @@ class MotionManager(Node):
     time_elapsed_since_opponent_detected = \
       (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
 
-    if time_elapsed_since_opponent_detected < 0.5 and self.opponent_distance_average < 0.4:
+    if time_elapsed_since_opponent_detected < 0.5 and self.opponent_distance_average < 0.3 and \
+      abs(self.opponent_heading_average) < radians(20):
       self.should_punch_counter += 1
     else:
       self.should_punch_counter -= 1
@@ -217,7 +218,7 @@ class MotionManager(Node):
       # Don't walk into obstacle detected by foot bumper
       # self.get_logger().info("Don't walk into obstacle detected by foot bumper")
       pass
-    elif self.opponent_distance_average > 0.4:
+    elif self.opponent_distance_average > 0.3:
       # Ram into opponent
       # self.get_logger().info("Ram into opponent")
       twist.linear.x = 0.2
