@@ -89,6 +89,30 @@ def generate_launch_description():
                                 ('action/_action/send_goal', 'tip_over/_action/send_goal')
                             ])
 
+    hook_left_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'hookLeft.pos'])
+    hook_left_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                            name='hook_left', parameters=[{'file': hook_left_pos_path}],
+                            remappings=[
+                                ('action/_action/feedback', 'hook_left/_action/feedback'),
+                                ('action/_action/status', 'hook_left/_action/status'),
+                                ('action/_action/cancel_goal', 'hook_left/_action/cancel_goal'),
+                                ('action/_action/get_result', 'hook_left/_action/get_result'),
+                                ('action/_action/send_goal', 'hook_left/_action/send_goal')
+                            ])
+
+    hook_right_pos_path = PathJoinSubstitution(
+        [FindPackageShare('wrestle'), 'pos', 'hookRight.pos'])
+    hook_right_node = Node(package='naosoccer_pos_action', executable='naosoccer_pos_action',
+                            name='hook_right', parameters=[{'file': hook_right_pos_path}],
+                            remappings=[
+                                ('action/_action/feedback', 'hook_right/_action/feedback'),
+                                ('action/_action/status', 'hook_right/_action/status'),
+                                ('action/_action/cancel_goal', 'hook_right/_action/cancel_goal'),
+                                ('action/_action/get_result', 'hook_right/_action/get_result'),
+                                ('action/_action/send_goal', 'hook_right/_action/send_goal')
+                            ])
+
     imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
                                     executable='imu_filter_madgwick_node',
                                     remappings=[('imu/data_raw', 'sensors/imu'),
@@ -179,6 +203,8 @@ def generate_launch_description():
         getup_back_node,
         getup_front_node,
         tip_over_node,
+        hook_left_node,
+        hook_right_node,
         imu_filter_madgwick_node,  # Slow
         nao_state_publisher_launch,  # Slow
         rviz_node,

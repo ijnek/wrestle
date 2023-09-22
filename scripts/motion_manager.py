@@ -30,6 +30,8 @@ class MotionManager(Node):
     self.getup_back_client = ActionClient(self, PosAction, 'getup_back')
     self.tip_over_client = ActionClient(self, PosAction, 'tip_over')
     self.crouch_client = ActionClient(self, Crouch, 'crouch')
+    self.hook_left_client = ActionClient(self, PosAction, 'hook_left')
+    self.hook_right_client = ActionClient(self, PosAction, 'hook_right')
 
     # Wait for action servers to come up
     self.get_logger().info("Wait for action servers")
@@ -43,6 +45,10 @@ class MotionManager(Node):
       self.get_logger().error("Failed to connect to tip over action server")
     if not self.crouch_client.wait_for_server(timeout_sec=5.0):
       self.get_logger().error("Failed to connect to crouch action server")
+    if not self.hook_left_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to hook left action server")
+    if not self.hook_right_client.wait_for_server(timeout_sec=5.0):
+      self.get_logger().error("Failed to connect to hook right action server")
 
     # Subscriptions
     self.get_logger().info("Initialize subscriptions")
@@ -70,6 +76,8 @@ class MotionManager(Node):
     self.acc_y_avg = 0  # radians
     self.doing_action = False
     self.crouched = False
+    self.last_hook_direction = 'left'
+    self.should_hook_counter = 0
 
     self.walk_goal_handle = None
     self.walking = False
@@ -90,19 +98,34 @@ class MotionManager(Node):
       return
 
     if self.fall_direction is not None:
-      self.cancel_walk()
-      if self.fall_direction is 'front':
+      if self.fall_direction == 'front':
         self.get_logger().info("Getup Front")
         self.action_future = self.getup_front_client.send_goal_async(PosAction.Goal())
-      if self.fall_direction is 'back':
+      if self.fall_direction == 'back':
         self.get_logger().info("Getup Back")
         self.action_future = self.getup_back_client.send_goal_async(PosAction.Goal())
       if self.fall_direction in ('left', 'right'):
         self.get_logger().info("Tip Over")
         self.action_future = self.tip_over_client.send_goal_async(PosAction.Goal())
       self.action_future.add_done_callback(self.action_goal_response_callback)
-      self.doing_action = True
+      self.cancel_walk()
       self.arm_enable.publish(Bool(data=False))
+      self.doing_action = True
+      return
+
+    if self.should_hook():
+      if self.last_hook_direction == 'right':
+        self.get_logger().info("Hook Left")
+        self.action_future = self.hook_left_client.send_goal_async(PosAction.Goal())
+        self.last_hook_direction = 'left'
+      else:  # 'right'
+        self.get_logger().info("Hook Right")
+        self.action_future = self.hook_right_client.send_goal_async(PosAction.Goal())
+        self.last_hook_direction = 'right'
+      self.action_future.add_done_callback(self.action_goal_response_callback)
+      self.cancel_walk()
+      self.arm_enable.publish(Bool(data=False))
+      self.doing_action = True
       return
 
     if not self.walking:
@@ -156,6 +179,20 @@ class MotionManager(Node):
     if self.walk_goal_handle is not None:
       self.walk_goal_handle.cancel_goal_async()
       self.walking = False
+
+  def should_hook(self):
+    time_elapsed_since_opponent_detected = \
+      (self.get_clock().now() - self.last_time_opponent_detected).nanoseconds / 1e9
+
+    if time_elapsed_since_opponent_detected < 0.5 and self.opponent_distance_average < 0.4:
+      self.should_hook_counter += 1
+    else:
+      self.should_hook_counter -= 1
+    self.should_hook_counter = min(max(self.should_hook_counter, 0), 5)
+
+    if self.should_hook_counter == 5:
+      return True
+    return False
 
   def calculate_twist(self):
     time_elapsed_since_opponent_detected = \
