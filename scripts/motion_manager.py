@@ -202,10 +202,14 @@ class MotionManager(Node):
       self.should_spin = True
 
     twist = Twist()
-    if time_elapsed_since_crouch_finished < 6.0:
+    if time_elapsed_since_crouch_finished < 5.0:
+      # Walk sideways
+      # self.get_logger().info("Walk sideways")
+      twist.linear.y = 0.3
+    elif time_elapsed_since_crouch_finished < 9.0:
       # Walk forwards
       # self.get_logger().info("Walk forwards")
-      twist.linear.x = 0.3
+      twist.linear.x = 0.2
     elif time_elapsed_since_opponent_detected > 2.0:
       # Slowly turn in direction we think opponent is in
       # self.get_logger().info("Slowly turn in direction we think opponent is in")
