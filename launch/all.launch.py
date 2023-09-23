@@ -37,7 +37,11 @@ def generate_launch_description():
         remappings=[('participant/CameraTop/image_color', 'image_top'),
                     ('participant/CameraBottom/image_color', 'image_bot'),
                     ('participant/CameraTop/camera_info', 'camera_info_top'),
-                    ('participant/CameraBottom/camera_info', 'camera_info_bot')])
+                    ('participant/CameraBottom/camera_info', 'camera_info_bot'),
+                    ('opponent/CameraTop/image_color', 'image_top'),
+                    ('opponent/CameraBottom/image_color', 'image_bot'),
+                    ('opponent/CameraTop/camera_info', 'camera_info_top'),
+                    ('opponent/CameraBottom/camera_info', 'camera_info_bot')])
 
     nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client',
                                 respawn=True)
