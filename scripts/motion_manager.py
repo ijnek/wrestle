@@ -126,7 +126,7 @@ class MotionManager(Node):
       self.walk_future = self.walk_client.send_goal_async(Walk.Goal())
       self.walk_future.add_done_callback(self.walk_goal_response_callback)
       self.walking = True
-      self.arm_enable.publish(Bool(data=True))
+    self.arm_enable.publish(Bool(data=True))
     self.twist_publisher.publish(self.calculate_twist())
 
   def opponent_callback(self, opponent_point):
@@ -205,13 +205,8 @@ class MotionManager(Node):
       self.should_spin = True
 
     twist = Twist()
-    if time_elapsed_since_crouch_finished < 3.0:
-      # Walk sideways
-      twist.linear.y = 0.4 if self.initial_side_walk_direction == 'left' else -0.4
-    elif time_elapsed_since_crouch_finished < 8.0:
-      # Walk forwards
-      # self.get_logger().info("Walk forwards")
-      twist.linear.x = 0.3
+    if time_elapsed_since_crouch_finished < 5.0:
+      twist.linear.x = 4.0
     elif time_elapsed_since_opponent_detected > 2.0:
       # Slowly turn in direction we think opponent is in
       # self.get_logger().info("Slowly turn in direction we think opponent is in")
