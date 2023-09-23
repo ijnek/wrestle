@@ -12,6 +12,7 @@ from rclpy.time import Time
 from walk_interfaces.action import Walk
 from std_msgs.msg import Bool
 from rclpy.qos import qos_profile_sensor_data
+import random
 
 ACCELEROMETER_FALLEN = 7.0  # m/s/s
 
@@ -75,6 +76,8 @@ class MotionManager(Node):
     self.doing_action = False
     self.crouched = False
     self.should_punch_counter = 0
+    self.initial_side_walk_direction = random.choice(['left', 'right'])
+    self.get_logger().info(f"Initial side walk direction: {self.initial_side_walk_direction}")
 
     self.walk_goal_handle = None
     self.walking = False
@@ -204,8 +207,7 @@ class MotionManager(Node):
     twist = Twist()
     if time_elapsed_since_crouch_finished < 5.0:
       # Walk sideways
-      # self.get_logger().info("Walk sideways")
-      twist.linear.y = 0.3
+      twist.linear.y = 0.3 if self.initial_side_walk_direction == 'left' else -0.3
     elif time_elapsed_since_crouch_finished < 9.0:
       # Walk forwards
       # self.get_logger().info("Walk forwards")
