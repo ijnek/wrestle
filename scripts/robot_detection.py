@@ -50,13 +50,15 @@ class RobotDetection(Node):
 
     self.point_publisher = self.create_publisher(PointStamped, 'opponent_point', 1)
 
+    self.get_logger().info('Robot detection constructor')
+
   def listener_callback(self, data):
     """
     Callback function.
     """
     self.data = data
     # Display the message on the console
-    # self.get_logger().info('Receiving video frame')
+    self.get_logger().info('Correctly receiving video frame', throttle_duration_sec=10)
 
     # Convert ROS Image message to OpenCV image
     img = self.br.imgmsg_to_cv2(data)
@@ -66,6 +68,7 @@ class RobotDetection(Node):
     if opponent_bb is None:
       return
 
+    self.get_logger().info('Detecting opponent correctly, calling ipm', throttle_duration_sec=10)
     req = MapPoint.Request()
     req.plane = create_horizontal_plane()
     req.point.x = opponent_bb.center.position.x
@@ -78,6 +81,7 @@ class RobotDetection(Node):
     future.add_done_callback(self.ipm_done_callback)
 
   def ipm_done_callback(self, future):
+    self.get_logger().info('Correctly calling ipm_done_callback', throttle_duration_sec=10)
     resp = future.result()
     max_detection_dist = 4.0
     if resp.point.point.x**2 + resp.point.point.y**2 > max_detection_dist**2:
@@ -88,8 +92,9 @@ class RobotDetection(Node):
     if resp.result == MapPoint.Response.RESULT_SUCCESS:
       self.point_publisher.publish(resp.point)
       self.publish_robot_marker(resp.point)
+      self.get_logger().info('Correctly publishing robot point', throttle_duration_sec=10)
     else:
-      print("mapping failed. status: ", resp.result)
+      self.get_logger().error(f"mapping failed. status: {resp.result}", throttle_duration_sec=10)
 
   def publish_robot_marker(self, point):
     marker = Marker()
