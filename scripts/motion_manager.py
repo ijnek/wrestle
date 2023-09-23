@@ -207,7 +207,7 @@ class MotionManager(Node):
     twist = Twist()
     if time_elapsed_since_crouch_finished < 3.0:
       twist.linear.x = 0.4
-    elif time_elapsed_since_opponent_detected > 0.5:
+    elif time_elapsed_since_opponent_detected > 2.0:
       # Slowly turn in direction we think opponent is in
       # self.get_logger().info("Slowly turn in direction we think opponent is in")
       twist.angular.z = 2.0 if self.opponent_heading_average > 0 else -2.0
