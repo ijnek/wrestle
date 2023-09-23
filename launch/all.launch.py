@@ -48,6 +48,7 @@ def generate_launch_description():
 
     walk_node = Node(package='walk', executable='walk', remappings=[('imu', 'sensors/imu')],
                      parameters=[{'max_forward': 0.4},
+                                 {'max_left': 0.4},
                                  {'sole_z': -0.29},
                                  {'sole_x': -0.03}])
 
