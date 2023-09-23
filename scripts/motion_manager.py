@@ -219,10 +219,13 @@ class MotionManager(Node):
       # Don't walk into obstacle detected by foot bumper
       # self.get_logger().info("Don't walk into obstacle detected by foot bumper")
       pass
-    elif self.opponent_distance_average > 0.3:
-      # Ram into opponent
-      # self.get_logger().info("Ram into opponent")
+    elif self.opponent_distance_average > 0.6:
+      # Walk towards opponent
       twist.linear.x = 0.4
+      twist.angular.z = self.opponent_heading_average * 2.0
+    elif self.opponent_distance_average > 0.3:
+      # Walk towards opponent
+      twist.linear.x = 0.2
       twist.angular.z = self.opponent_heading_average * 2.0
     # else:
       # self.get_logger().info("Close to opponent, not walking in")
