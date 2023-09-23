@@ -199,18 +199,18 @@ class MotionManager(Node):
       (self.get_clock().now() - self.last_time_bumper_right_pressed).nanoseconds / 1e9
 
     # Update self.should_spin hysteresis
-    if self.should_spin and abs(self.opponent_heading_average) < radians(5):
+    if self.should_spin and abs(self.opponent_heading_average) < radians(10):
       self.should_spin = False
-    elif not self.should_spin and abs(self.opponent_heading_average) > radians(10):
+    elif not self.should_spin and abs(self.opponent_heading_average) > radians(20):
       self.should_spin = True
 
     twist = Twist()
-    if time_elapsed_since_crouch_finished < 5.0:
+    if time_elapsed_since_crouch_finished < 3.0:
       twist.linear.x = 0.4
-    elif time_elapsed_since_opponent_detected > 2.0:
+    elif time_elapsed_since_opponent_detected > 0.5:
       # Slowly turn in direction we think opponent is in
       # self.get_logger().info("Slowly turn in direction we think opponent is in")
-      twist.angular.z = 1.0 if self.opponent_heading_average > 0 else -1.0
+      twist.angular.z = 2.0 if self.opponent_heading_average > 0 else -2.0
     elif self.should_spin:
       # Quickly turn towards opponent
       # self.get_logger().info("Quickly turn towards opponent")
@@ -222,8 +222,8 @@ class MotionManager(Node):
     elif self.opponent_distance_average > 0.3:
       # Ram into opponent
       # self.get_logger().info("Ram into opponent")
-      twist.linear.x = 0.2
-      twist.angular.z = self.opponent_heading_average
+      twist.linear.x = 0.4
+      twist.angular.z = self.opponent_heading_average * 2.0
     # else:
       # self.get_logger().info("Close to opponent, not walking in")
 

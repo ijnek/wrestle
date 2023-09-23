@@ -39,21 +39,26 @@ def generate_launch_description():
                     ('participant/CameraTop/camera_info', 'camera_info_top'),
                     ('participant/CameraBottom/camera_info', 'camera_info_bot')])
 
-    nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client')
+    nao_lola_client_node = Node(package='nao_lola_client', executable='nao_lola_client',
+                                respawn=True)
 
-    ik_node = Node(package='nao_ik', executable='ik_node')
+    ik_node = Node(package='nao_ik', executable='ik_node',
+                   respawn=True)
 
     nao_phase_provider_node = Node(package='nao_phase_provider', executable='nao_phase_provider',
-                                   remappings=[('fsr', 'sensors/fsr')])
+                                   remappings=[('fsr', 'sensors/fsr')],
+                                   respawn=True)
 
     walk_node = Node(package='walk', executable='walk', remappings=[('imu', 'sensors/imu')],
                      parameters=[{'max_forward': 0.4},
                                  {'max_forward_change': 0.2},
                                  {'max_left': 0.4},
                                  {'sole_z': -0.29},
-                                 {'sole_x': -0.03}])
+                                 {'sole_x': -0.03}],
+                     respawn=True)
 
-    nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion')
+    nao_lola_conversion_node = Node(package='nao_lola_conversion', executable='nao_lola_conversion',
+                                    respawn=True)
 
     crouch_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'crouch.pos'])
@@ -65,7 +70,8 @@ def generate_launch_description():
                                 ('action/_action/cancel_goal', 'crouch/_action/cancel_goal'),
                                 ('action/_action/get_result', 'crouch/_action/get_result'),
                                 ('action/_action/send_goal', 'crouch/_action/send_goal')
-                            ])
+                            ],
+                            respawn=True)
 
     getup_back_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'getupBack.pos'])
@@ -77,7 +83,8 @@ def generate_launch_description():
                                 ('action/_action/cancel_goal', 'getup_back/_action/cancel_goal'),
                                 ('action/_action/get_result', 'getup_back/_action/get_result'),
                                 ('action/_action/send_goal', 'getup_back/_action/send_goal')
-                            ])
+                            ],
+                            respawn=True)
 
     getup_front_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'getupFront.pos'])
@@ -89,7 +96,8 @@ def generate_launch_description():
                                 ('action/_action/cancel_goal', 'getup_front/_action/cancel_goal'),
                                 ('action/_action/get_result', 'getup_front/_action/get_result'),
                                 ('action/_action/send_goal', 'getup_front/_action/send_goal')
-                            ])
+                            ],
+                            respawn=True)
 
     tip_over_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'tipOver.pos'])
@@ -101,7 +109,8 @@ def generate_launch_description():
                                 ('action/_action/cancel_goal', 'tip_over/_action/cancel_goal'),
                                 ('action/_action/get_result', 'tip_over/_action/get_result'),
                                 ('action/_action/send_goal', 'tip_over/_action/send_goal')
-                            ])
+                            ],
+                            respawn=True)
 
     punch_pos_path = PathJoinSubstitution(
         [FindPackageShare('wrestle'), 'pos', 'doublePunch.pos'])
@@ -113,7 +122,8 @@ def generate_launch_description():
                                 ('action/_action/cancel_goal', 'punch/_action/cancel_goal'),
                                 ('action/_action/get_result', 'punch/_action/get_result'),
                                 ('action/_action/send_goal', 'punch/_action/send_goal')
-                            ])
+                            ],
+                            respawn=True)
 
     imu_filter_madgwick_node = Node(package='imu_filter_madgwick',
                                     executable='imu_filter_madgwick_node',
@@ -123,7 +133,8 @@ def generate_launch_description():
                                                 {'reverse_tf': True},
                                                 {'use_mag': False},
                                                 {'gain': 0.3},
-                                                ])
+                                                ],
+                                    respawn=True)
 
     nao_state_publisher_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -153,16 +164,19 @@ def generate_launch_description():
 
     robot_detection_node_bot = Node(package='wrestle', executable='robot_detection.py',
                                     remappings=[('image', 'image_bot'),
-                                                ('map_point', 'map_point_bot')])
+                                                ('map_point', 'map_point_bot')],
+                                    respawn=True)
 
     base_footprint_node = Node(package='humanoid_base_footprint', executable='base_footprint',
-                                remappings=[('walk_support_state', 'phase')])
+                                remappings=[('walk_support_state', 'phase')],
+                                respawn=True)
 
     # cameratop_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
     #                               arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraTop_optical_frame', 'CameraTop'])
 
     camerabot_tf_publisher = Node(package='tf2_ros', executable='static_transform_publisher',
-                                  arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraBottom_optical_frame', 'CameraBottom'])
+                                  arguments=['0.0', '0.0', '0.0', '0.0', '0.0', '0.0', 'CameraBottom_optical_frame', 'CameraBottom'],
+                                  respawn=True)
 
     # ipm_node_top_camera = Node(package='ipm_image_node', executable='ipm', name='ipm_top',
     #                            remappings=[('camera_info', 'camera_info_top'),
@@ -176,7 +190,8 @@ def generate_launch_description():
     #                                        ('projected_point_cloud', 'projected_point_cloud_bot')],
     #                            parameters=[{'type': 'rgb_image'}])
 
-    head_skill_node = Node(package='wrestle', executable='head_skill.py')
+    head_skill_node = Node(package='wrestle', executable='head_skill.py',
+                           respawn=True)
 
     # ipm_service_node_top = Node(package='ipm_service', executable='ipm_service', name='ipm_service_top',
     #                             remappings=[('camera_info', 'camera_info_top'),
@@ -188,7 +203,7 @@ def generate_launch_description():
                                 respawn=True)
 
     motion_manager_node_py = Node(package='wrestle', executable='motion_manager.py',
-                                  output='screen')
+                                  respawn=True)
 
     arm_provider_node = Node(package='wrestle', executable='arm_provider.py')
 
